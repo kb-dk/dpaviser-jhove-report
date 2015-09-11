@@ -1,0 +1,4 @@
+[submodule "jhove"]
+	path = jhove
+	url = https://github.com/statsbiblioteket/jhove.git
+	branch = integration
