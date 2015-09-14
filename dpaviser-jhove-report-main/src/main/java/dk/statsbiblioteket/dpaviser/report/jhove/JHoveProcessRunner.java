@@ -23,7 +23,8 @@ public class JHoveProcessRunner implements Function<Path,InputStream> {
                 ? asList("cmd", "/c", dir + System.getProperty("file.separator") + "jhove.bat", "-c", dir + "/../conf/jhove.conf")
                 : asList(dir + System.getProperty("file.separator") + "jhove", "-c", dir + "/../conf/jhove.conf"));
 
-        l.addAll(asList("-h", "xml", "-m", "pdf-hul", "-l", "OFF"));
+//        l.addAll(asList("-h", "xml", "-m", "pdf-hul", "-l", "OFF"));
+        l.addAll(asList("-h", "xml", "-l", "OFF"));
         this.command = l;
     }
 
