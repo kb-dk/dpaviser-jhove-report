@@ -1,9 +1,14 @@
 package dk.statsbiblioteket.dpaviser.report;
 
-import com.google.common.base.Function;
 import dk.statsbiblioteket.dpaviser.report.jhove.JHoveProcessRunner;
 import dk.statsbiblioteket.util.xml.DOM;
 import dk.statsbiblioteket.util.xml.DefaultNamespaceContext;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.PrintSetup;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -16,17 +21,19 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -43,12 +50,16 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            System.err.println("usage: infomedia-dump-dir");
+            System.err.println("usage: spreadsheet.xls infomedia-dump-dir");
         }
+        long start = System.currentTimeMillis();
 
-        Path infomediaDumpDirPath = Paths.get(args[0]);
-        System.out.println(new Main().apply(infomediaDumpDirPath).toString().length());
+        final Main main = new Main();
+        Stream<List<String>> cellLines = main.extractLinesFromJHoveOnSingleEditionDir(Paths.get(args[1])).peek(System.out::println);
+        main.collectCellLinesInSpreadSheet(args[0], cellLines);
+        //System.out.println(cellLines).toString().length());
 
+        System.out.println(System.currentTimeMillis() - start);
 
     }
 
@@ -77,31 +88,44 @@ public class Main {
         return new JHoveProcessRunner(canonicalPath);
     }
 
-    public Object apply(Path infomediaDumpDirPath) throws URISyntaxException, IOException {
+    protected void collectCellLinesInSpreadSheet(String fileName, Stream<List<String>> cellLines) throws Exception {
+        Workbook wb = new HSSFWorkbook(); // old Excel for now.
+        Sheet sheet = wb.createSheet("sample title");
+        PrintSetup printSetup = sheet.getPrintSetup();
+        printSetup.setLandscape(true);
+
+        // For now collect first and then create rows.  Look into writing a collector.
+
+        List<List<String>> l = cellLines.collect(toList());
+
+        int rownumber = sheet.getPhysicalNumberOfRows(); // start with 0
+        for (List<String> ls : l) {
+            Row row = sheet.createRow(rownumber++);
+            int cellNumber = 0;
+            for (String cellValue : ls) {
+                Cell cell = row.createCell(cellNumber++);
+                try {
+                    long longValue = Long.valueOf(cellValue);
+                    cell.setCellValue(longValue);
+                } catch (NumberFormatException nbe) {
+                    // Not a number, save as string
+                    cell.setCellValue(cellValue);
+                }
+            }
+        }
+
+        FileOutputStream out = new FileOutputStream(fileName);
+        wb.write(out);
+        out.close();
+
+    }
+
+    public Stream<List<String>> extractLinesFromJHoveOnSingleEditionDir(Path infomediaDumpDirPath) throws URISyntaxException, IOException {
         // .../infomed/NOR/2015/06/03
         Pattern singleEditionDirectoryPattern = Pattern.compile("^.*/[A-Z0-9]+/[0-9]{4}/(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])$");
 
         JHoveProcessRunner jhove = getjHoveProcessRunner();
 
-//        Stream<Document> doms =
-//                Files.walk(infomediaDumpDirPath)
-//                        .filter(Files::isDirectory)
-//                        .filter((path) -> singleEditionDirectoryPattern.matcher(path.toString()).matches())
-//                        .peek(System.out::println)
-//                        .limit(3)
-//                        .map(jhove::apply)
-//                        .map(DOM::streamToDOM)
-//                        .peek(dom -> {
-//                            try {
-//                                System.out.println(DOM.domToString(dom));
-//                            } catch (TransformerException e) {
-//                                throw new RuntimeException("domToString", e);
-//                            }
-//                        });
-
-//        Object = asList(
-//                () -> null
-//        );
         Predicate<Path> isSingleEditionDir = (path) -> singleEditionDirectoryPattern.matcher(path.toString()).matches();
 
         Stream<Path> pathStream = Files.walk(infomediaDumpDirPath)
@@ -111,31 +135,6 @@ public class Main {
 
         Function<Path, Document> pathDocumentFunction = path -> DOM.streamToDOM(jhove.apply(path), true);
 
-//        Stream<Document> documentStream = pathStream
-//                .map(path -> pathDocumentFunction.apply(path));
-//
-//        Stream<List<String>> stringListStream = documentStream
-//                .map(this::applyXPathsToDocument);
-//        // XPath set up stolen from IteratorForFedora3.java
-
-//        XPath xp = xpathFactory.newXPath();
-//        xp.setNamespaceContext(context);
-
-//        ResultCollector result = getResultCollectorFor("name",
-//                d -> xpathCheck(xp, "/j:jhove/j:repInfo/j:version/text()", d, "1.4"),
-//                d -> xpathCheck(xp, "/j:jhove/j:repInfo/j:status/text()", d, "Well-Formed and valid"),
-//                d -> xpathCheck(xp, "count(//j:property/j:name[text() = 'Font'])", d, "3")
-//        );
-//        Assert.assertTrue(result.isSuccess(), result.toReport());  // If unsuccessful, use the report as message.
-//
-
-
-//        XPath xpath = ;
-//
-//        Object xpaths = asList((doc) -> n
-//        BiFunction<Path, Document, List<String>> extractInfo =
-//                (path, document) -> xpaths
-//
         XPathExpression repInfo;
         try {
             XPath xpath = xpathFactory.newXPath();
@@ -165,40 +164,65 @@ public class Main {
                     }
                 });
 
-        List<String> fieldExpressions = asList(
-                "@uri", "j:status/text()", "j:size/text()",
-                "name(.)", ".//j:property[j:name/text() = 'Producer']/j:values/j:value/text()", ".//j:size/text()"
+        List<Function<Node, String>> fieldExpressions = asList(
+                e("@uri", URLDecoder::decode), e("j:status/text()"), e("j:size/text()"),
+                e("name(.)"), e(".//j:property[j:name/text() = 'Producer']/j:values/j:value/text()"),
+                e(".//j:size/text()")
         );
 
         Stream<List<String>> fieldLinesList = repInfoNodeStream
                 //.limit(10)
+                //.parallel()
                 .map(repInfoNode -> getFieldsForLine(repInfoNode, fieldExpressions));
 
-        List<Object> l = fieldLinesList
-                .peek(System.out::println)
-                .collect(toList());
-
-
-        return l;
+        return fieldLinesList;
     }
 
-    public List<String> getFieldsForLine(Node repInfoNode, List<String> fieldExpressions) {
-        List<String> l = new ArrayList<>();
-        for (String expression : fieldExpressions) {
-            XPath xpath = xpathFactory.newXPath();
-            xpath.setNamespaceContext(context);
-            String result = null;
-            try {
-                result = xpath.compile(expression).evaluate(repInfoNode);
-            } catch (XPathExpressionException e) {
-                throw new RuntimeException(expression, e);
-            }
-            if (result.length() > 100) {
-                result = new String(result.substring(0, 100)+"...");
-            }
-            l.add(result);
+    /**
+     * Evaluate XPath expression on node giving string, (including optional transformations (like URLDecoder::decode)).
+     *
+     * @param expression           XPath expression to extractLinesFromJHoveOnSingleEditionDir to node.  Note that this
+     *                             can be any node in the DOM, and that relative paths should be used.
+     * @param afterTransformations transformations to extractLinesFromJHoveOnSingleEditionDir in sequence to the
+     *                             original value extracted by XPath.
+     * @return
+     */
+    protected Function<Node, String> e(String expression, Function<String, String>... afterTransformations) {
+        XPath xpath = xpathFactory.newXPath();
+        xpath.setNamespaceContext(context);
+        XPathExpression matcher;
+        try {
+            matcher = xpath.compile(expression);
+        } catch (XPathExpressionException e) {
+            throw new RuntimeException("bad expression: " + expression, e);
         }
-        return l;
+
+        return e -> {
+            try {
+                String s = matcher.evaluate(e);
+                for (Function<String, String> f : afterTransformations) {
+                    s = f.apply(s);
+                }
+                return s;
+            } catch (XPathExpressionException e1) {
+                throw new RuntimeException("bad expression: " + expression, e1);
+            }
+        };
+    }
+
+    /**
+     * Given a Node create a List of strings by applying each fieldExpression to the node.  If the field value becomes
+     * longer than 100 characters it is truncated.
+     *
+     * @param repInfoNode
+     * @param fieldExpressions
+     * @return
+     */
+    public List<String> getFieldsForLine(Node repInfoNode, List<Function<Node, String>> fieldExpressions) {
+        return fieldExpressions.stream()
+                .map(expression -> expression.apply(repInfoNode))
+                .map(s -> s.length() < 100 ? s : new String(s.substring(0, 100) + "..."))
+                .collect(toList());
     }
 
     private String domToString(Node document) {
@@ -209,10 +233,5 @@ public class Main {
         }
     }
 
-
-    protected List<String> applyXPathsToDocument(Document document) {
-
-        return null;
-    }
-
 }
+
