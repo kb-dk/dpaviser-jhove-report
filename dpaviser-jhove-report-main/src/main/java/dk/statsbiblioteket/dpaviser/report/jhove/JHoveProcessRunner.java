@@ -12,7 +12,7 @@ import java.util.function.Function;
 import static java.util.Arrays.asList;
 
 
-public class JHoveProcessRunner implements Function<Path,InputStream> {
+public class JHoveProcessRunner implements Function<Path, InputStream> {
     private final List<String> command;
     private Map<String, String> environmentVariables;
 
@@ -23,7 +23,6 @@ public class JHoveProcessRunner implements Function<Path,InputStream> {
                 ? asList("cmd", "/c", dir + System.getProperty("file.separator") + "jhove.bat", "-c", dir + "/../conf/jhove.conf")
                 : asList(dir + System.getProperty("file.separator") + "jhove", "-c", dir + "/../conf/jhove.conf"));
 
-//        l.addAll(asList("-h", "xml", "-m", "pdf-hul", "-l", "OFF"));
         l.addAll(asList("-h", "xml", "-l", "OFF"));
         this.command = l;
     }
@@ -31,19 +30,19 @@ public class JHoveProcessRunner implements Function<Path,InputStream> {
 
     @Override
     public InputStream apply(Path infomediaSingleEditionDirPath) {
-            List<String> actualCommand = new ArrayList<>(command);
-            actualCommand.add(infomediaSingleEditionDirPath.toString());
+        List<String> actualCommand = new ArrayList<>(command);
+        actualCommand.add(infomediaSingleEditionDirPath.toString());
 
-            System.out.println(actualCommand);
-            ProcessRunner processRunner = new ProcessRunner(actualCommand);
-            processRunner.setEnviroment(environmentVariables);
-            processRunner.setErrorCollectionByteSize(-1);
-            processRunner.setOutputCollectionByteSize(-1);
-            processRunner.run();
-            String processError = processRunner.getProcessErrorAsString();
-            if (processError.isEmpty() == false) {
-                System.err.println(processError);
-            }
-            return processRunner.getProcessOutput();
+        System.out.println(actualCommand);
+        ProcessRunner processRunner = new ProcessRunner(actualCommand);
+        processRunner.setEnviroment(environmentVariables);
+        processRunner.setErrorCollectionByteSize(-1);
+        processRunner.setOutputCollectionByteSize(-1);
+        processRunner.run();
+        String processError = processRunner.getProcessErrorAsString();
+        if (processError.isEmpty() == false) {
+            System.err.println(processError);
+        }
+        return processRunner.getProcessOutput();
     }
 }
