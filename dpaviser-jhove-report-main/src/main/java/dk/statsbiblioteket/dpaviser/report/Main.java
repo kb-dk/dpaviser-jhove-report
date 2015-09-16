@@ -3,6 +3,11 @@ package dk.statsbiblioteket.dpaviser.report;
 import dk.statsbiblioteket.dpaviser.report.jhove.JHoveProcessRunner;
 import dk.statsbiblioteket.util.xml.DOM;
 import dk.statsbiblioteket.util.xml.DefaultNamespaceContext;
+import edu.harvard.hul.ois.jhove.App;
+import edu.harvard.hul.ois.jhove.JhoveBase;
+import edu.harvard.hul.ois.jhove.JhoveException;
+import edu.harvard.hul.ois.jhove.Module;
+import edu.harvard.hul.ois.jhove.OutputHandler;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -17,6 +22,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -50,7 +57,8 @@ public class Main {
         // .../infomed/NOR/2015/06/03
         Pattern singleEditionDirectoryPattern = Pattern.compile("^.*/[A-Z0-9]+/[0-9]{4}/(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])$");
 
-        Function<Path, InputStream> jhove = getjHoveProcessRunner();
+        //        Function<Path, InputStream> jhove = getjHoveProcessRunner();
+        Function<Path, InputStream> jhove = getInternalJHoveInvoker();
 
         Predicate<Path> isSingleEditionDir = (path) -> singleEditionDirectoryPattern.matcher(path.toString()).matches();
 
@@ -63,21 +71,65 @@ public class Main {
                 Files.walk(Paths.get(args[1]))
                         .filter(Files::isDirectory)
                         .filter(isSingleEditionDir)
-                        .limit(4)
+                        //.limit(20)
+                        .peek(System.out::println)
                         .map(jhove::apply)
                         .map(DOM::streamToDOM)
-                        .peek(System.out::println)
                         .flatMap(dom -> nodelistForXPathExpression(dom, repInfo))
                                 // We are now looking at <j:repInfo> nodes in the full jhove DOM tree
-                        .parallel()
+                                //.parallel()
                         .flatMap(nodeListFunction)
                         .collect(toList());
 
         Workbook workbook = workbookFor(cells);
         writeToFile(workbook, args[0]);
 
-        System.out.println(System.currentTimeMillis() - start);
+        System.out.println(System.currentTimeMillis() - start + " ms.");
 
+    }
+
+    protected static Function<Path, InputStream> getInternalJHoveInvoker() {
+        try {
+            return getInternalJHoveInvoker0();
+        } catch (JhoveException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected static Function<Path, InputStream> getInternalJHoveInvoker0() throws JhoveException {
+        // http://www.garymcgath.com/jhovenote.html
+        App app = new App("name", "release", new int[]{2015, 9, 15}, "usage", "rights");
+        JhoveBase je = new JhoveBase();
+        final Module module = null;
+        je.setLogLevel("SEVERE");
+        je.init("/home/tra/git/dpaviser-jhove-report/jhove/jhove-apps/src/main/config/jhove.conf", null); //FIXME
+        OutputHandler handler = Objects.requireNonNull(je.getHandler("xml"), "getHandler");
+        je.setEncoding("utf-8");
+        je.setTempDirectory("/tmp/jhove");  //FIXME
+        je.setBufferSize(4096);
+        je.setChecksumFlag(false);
+        je.setShowRawFlag(false);
+
+        try {
+            // JHove either uses a file given by name or System.out iff null.
+            String outputFile = File.createTempFile("jhove", ".xml").getAbsolutePath(); //FIXME
+            return (path) -> {
+                try {
+                    je.dispatch(app, module, null, handler, outputFile, new String[]{path.toString()});
+                    return new FileInputStream(outputFile) {
+                        @Override
+                        public void close() throws IOException {
+                            super.close();
+                            //new File(outputFile).delete();  /fails
+                        }
+                    };
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            };
+        } catch (IOException e) {
+            throw new RuntimeException("could not create temp file", e);
+        }
     }
 
     protected static Stream<? extends Node> nodelistForXPathExpression(Document dom, XPathExpression repInfo) {
