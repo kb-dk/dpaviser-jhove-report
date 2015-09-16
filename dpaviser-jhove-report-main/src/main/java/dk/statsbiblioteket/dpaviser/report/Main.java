@@ -4,6 +4,7 @@ import dk.statsbiblioteket.dpaviser.report.jhove.JHoveProcessRunner;
 import dk.statsbiblioteket.util.xml.DOM;
 import dk.statsbiblioteket.util.xml.DefaultNamespaceContext;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -23,7 +24,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static javax.xml.xpath.XPathConstants.NODESET;
 
@@ -58,27 +57,20 @@ public class Main {
         XPathExpression repInfo = xpathCompile("/j:jhove/j:repInfo");
 
 
+        NodeListFunction nodeListFunction = new NodeListFunction();
+
         List<List<String>> cells =
                 Files.walk(Paths.get(args[1]))
                         .filter(Files::isDirectory)
                         .filter(isSingleEditionDir)
-                        .limit(20)
+                        .limit(4)
                         .map(jhove::apply)
                         .map(DOM::streamToDOM)
                         .peek(System.out::println)
                         .flatMap(dom -> nodelistForXPathExpression(dom, repInfo))
                                 // We are now looking at <j:repInfo> nodes in the full jhove DOM tree
                         .parallel()
-                        .map(repInfoNode -> asList(
-                                e("@uri", URLDecoder::decode),
-                                e("j:status/text()"),
-                                e("j:size/text()"),
-                                e("name(.)"),
-                                e(".//j:property[j:name/text() = 'Producer']/j:values/j:value/text()"),
-                                e(".//j:size/text()")).stream()
-                                .map(expression -> expression.apply(repInfoNode))
-                                .map(s -> s.length() < 100 ? s : new String(s.substring(0, 100) + "..."))
-                                .collect(toList()))
+                        .flatMap(nodeListFunction)
                         .collect(toList());
 
         Workbook workbook = workbookFor(cells);
@@ -151,7 +143,7 @@ public class Main {
      *                             original value extracted by XPath.
      * @return
      */
-    protected static Function<Node, String> e(String expression, Function<String, String>... afterTransformations) {
+    public static Function<Node, String> e(String expression, Function<String, String>... afterTransformations) {
 
         XPathExpression matcher = xpathCompile(expression);
 
@@ -169,7 +161,7 @@ public class Main {
     }
 
     /**
-     * Create a HSSFWorkbook corresponding to a cell "array" of string values
+     * Create a HSSFWorkbook corresponding to a cell "array" of values (numeric values are recognized).
      */
 
     public static Workbook workbookFor(List<List<String>> cells) {
@@ -179,19 +171,24 @@ public class Main {
             Row row = sheet.createRow(sheet.getPhysicalNumberOfRows());
             int cellNumber = 0;
             for (String cellValue : rowList) {
-                row.createCell(cellNumber++).setCellValue(cellValue);
+                Cell cell = row.createCell(cellNumber++);
+                try {
+                    cell.setCellValue(Double.parseDouble(cellValue));
+                } catch (NumberFormatException nfe) {
+                    cell.setCellValue(cellValue);
+                }
             }
         }
         return workbook;
     }
 
     /**
-     * Write a workbook to the given file
+     * Write a Apache POI workbook to the given file
      */
     public static void writeToFile(Workbook workbook, String fileName) throws IOException {
         try (FileOutputStream out = new FileOutputStream(fileName)) {
             workbook.write(out);
         }
     }
-}
 
+}
