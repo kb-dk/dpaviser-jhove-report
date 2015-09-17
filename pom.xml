@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dk.statsbiblioteket.dpaviser</groupId>
-    <artifactId>dpaviser-jhove-dk.statsbiblioteket.dpaviser.report</artifactId>
+    <artifactId>dpaviser-jhove-report</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
 
