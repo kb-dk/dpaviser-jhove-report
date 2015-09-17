@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 
+/** Invoke jhove inside a maven source tree.  Somewhat slower, but can run in parallel.  */
 
 public class JHoveProcessRunner implements Function<Path, InputStream> {
     private final List<String> command;
@@ -20,8 +21,8 @@ public class JHoveProcessRunner implements Function<Path, InputStream> {
     public JHoveProcessRunner(String dir) {
         List<String> l = new ArrayList<String>();
         l.addAll(System.getProperty("os.name").startsWith("Windows")
-                ? asList("cmd", "/c", dir + System.getProperty("file.separator") + "jhove.bat", "-c", dir + "/../conf/jhove.conf")
-                : asList(dir + System.getProperty("file.separator") + "jhove", "-c", dir + "/../conf/jhove.conf"));
+                ? asList("cmd", "/c", dir + System.getProperty("file.separator") + "jhove.bat", "-c", dir + "/../conf/jhove.config.xml")
+                : asList(dir + System.getProperty("file.separator") + "jhove", "-c", dir + "/../conf/jhove.config.xml"));
 
         l.addAll(asList("-h", "xml", "-l", "OFF"));
         this.command = l;

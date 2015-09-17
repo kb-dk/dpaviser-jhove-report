@@ -7,12 +7,24 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>dpaviser-jhove-dk.statsbiblioteket.dpaviser.report-main</name>
+    <name>dpaviser-jhove-report-main</name>
     <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <!-- jhove snapshots until 1.12 is released officially -->
+
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>opf-dev-mvn</id>
+            <name>opf-dev</name>
+            <url>http://artifactory.opf-labs.org/artifactory/opf-dev</url>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
