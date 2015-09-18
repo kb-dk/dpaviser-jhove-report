@@ -9,4 +9,5 @@ buildNumber.properties
 .idea
 *.iml
 
+nbactions.xml
 
