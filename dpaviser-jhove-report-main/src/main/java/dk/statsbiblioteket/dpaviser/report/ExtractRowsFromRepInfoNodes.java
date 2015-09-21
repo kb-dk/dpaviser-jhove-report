@@ -2,6 +2,7 @@ package dk.statsbiblioteket.dpaviser.report;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import dk.statsbiblioteket.dpaviser.report.helpers.XPathHelpers;
 import org.w3c.dom.Node;
 
 import java.io.File;
@@ -26,20 +27,19 @@ import java.util.stream.Stream;
 public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<String>>> {
     @Override
     public Stream<List<String>> apply(Node repInfoNode) {
-        try {
-            return apply0(repInfoNode);
-        } catch (Exception e) {
-            throw new RuntimeException("apply", e);
-        }
-    }
-
-    public Stream<List<String>> apply0(Node repInfoNode) throws URISyntaxException, IOException {
 
         List<List<String>> rows = new ArrayList<>();
         {
             List<String> row = new ArrayList<>();
 
-            URI uri = new URI(MainHelpers.eval("@uri").apply(repInfoNode));
+            URI uri;
+            String uriString = null;
+            try {
+                uriString = XPathHelpers.evalXPathAndApply("@uri").apply(repInfoNode);
+                uri = new URI(uriString);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException("uriString=" + uriString, e);
+            }
 
             String uriPath = uri.getPath();
 
@@ -47,10 +47,24 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
 
             row.add(uriPath);
             if (uriPath.endsWith(".md5")) { // do checksum check
-                String md5FileLine = Files.readAllLines(path).get(0);
+                String md5FileLine = null;
+
+                try {
+                    md5FileLine = Files.readAllLines(path).get(0);
+                } catch (IOException e) {
+                    throw new RuntimeException("cannot read lines from " + uriPath, e);
+                }
+
                 if (md5FileLine.length() == 32) {
                     File fileToHash = new File(uriPath.substring(0, uriPath.length() - ".md5".length()));
-                    HashCode md5calculated = com.google.common.io.Files.hash(fileToHash, Hashing.md5());
+                    HashCode md5calculated = null;
+
+                    try {
+                        md5calculated = com.google.common.io.Files.hash(fileToHash, Hashing.md5());
+                    } catch (IOException e) {
+                        throw new RuntimeException("Cannot hash " + fileToHash.getAbsolutePath(), e);
+                    }
+
                     if (md5FileLine.equalsIgnoreCase(md5calculated.toString())) {
                         row.add("MD5 valid");
                     } else {
@@ -61,12 +75,12 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 }
             } else {
                 // initial few cells, more will come.
-                row.add(MainHelpers.eval("./j:size/text()").apply(repInfoNode));
-                row.add(MainHelpers.eval("./j:format/text()").apply(repInfoNode));
-                row.add(MainHelpers.eval("./j:version/text()").apply(repInfoNode));
-                row.add(MainHelpers.eval("./j:mimeType/text()").apply(repInfoNode));
-                row.add(MainHelpers.eval("./j:status/text()").apply(repInfoNode));
-                row.add(MainHelpers.eval("./j:messages/j:message/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:size/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:format/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:version/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:mimeType/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:status/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:messages/j:message/text()").apply(repInfoNode));
             }
             rows.add(row);
         }

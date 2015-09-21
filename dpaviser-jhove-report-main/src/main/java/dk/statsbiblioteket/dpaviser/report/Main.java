@@ -1,5 +1,8 @@
 package dk.statsbiblioteket.dpaviser.report;
 
+import dk.statsbiblioteket.dpaviser.report.helpers.POIHelpers;
+import dk.statsbiblioteket.dpaviser.report.helpers.XPathHelpers;
+import dk.statsbiblioteket.dpaviser.report.jhove.JHoveHelpers;
 import dk.statsbiblioteket.util.xml.DOM;
 
 import java.io.File;
@@ -18,17 +21,15 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            System.err.println("usage: spreadsheet.xls infomedia-dump-dir");
+            System.err.println("Usage: java " + Main.class.getName() + " spreadsheet.xml infomedia-dump-dir");
         }
         long start = System.currentTimeMillis();
 
         File tmpDir = com.google.common.io.Files.createTempDir();
 
-        Pattern p = Pattern.compile("^.*/[A-Z0-9]+/[0-9]{4}/(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])$");
+        Pattern singleEditionDirPattern = Pattern.compile("^.*/[A-Z0-9]+/[0-9]{4}/(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])$");
 
-        Predicate<Path> isSingleEditionDir = path -> {
-            return p.matcher(path.toString()).matches();
-        };
+        Predicate<Path> isSingleEditionDir = path -> singleEditionDirPattern.matcher(path.toString()).matches();
 
         // Locate all dirs corresponding to a single edition, run jhove on them, and extract
         // one or more row of cells for each file.  Create a spreadsheet corresponding to the rows.
@@ -38,14 +39,14 @@ public class Main {
                         .filter(Files::isDirectory)
                         .filter(isSingleEditionDir) // .../infomed/NOR/2015/06/03
                         .peek(System.out::println)  // see dir names on system out.
-                        .map(MainHelpers.getInternalJHoveInvoker(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
+                        .map(JHoveHelpers.getInternalJHoveInvoker(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
                         .map(DOM::streamToDOM)
-                        .flatMap(dom -> MainHelpers.getNodesFor(dom, MainHelpers.xpathCompile("/j:jhove/j:repInfo")))
+                        .flatMap(dom -> XPathHelpers.getNodesFor(dom, XPathHelpers.xpathCompile("/j:jhove/j:repInfo")))
                         .flatMap(new ExtractRowsFromRepInfoNodes())
                         .collect(toList());
 
         try (OutputStream out = new FileOutputStream(args[0])) {
-            MainHelpers.workbookFor(cellRows).write(out);
+            POIHelpers.workbookFor(cellRows).write(out);
         }
         // TODO: clean up temp dir.
         System.out.println(System.currentTimeMillis() - start + " ms.");

@@ -32,7 +32,6 @@
  <module>
   <class>edu.harvard.hul.ois.jhove.module.XmlModule</class>
   <param>schema=http://www.example.com/schema;/home/schemas/exampleschema.xsd</param>
-  <param>schema=;/home/tra/git/dpaviser-aggregator/dpaviser-metadata-checker/dpaviser-metadata-checker-checkers/src/main/resources/NewsML_1.2-infomedia.xsd</param>
  </module>
  <module>
   <class>edu.harvard.hul.ois.jhove.module.HtmlModule</class>

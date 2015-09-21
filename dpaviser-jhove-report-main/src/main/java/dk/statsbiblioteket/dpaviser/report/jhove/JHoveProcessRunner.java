@@ -13,6 +13,7 @@ import static java.util.Arrays.asList;
 
 /** Invoke jhove inside a maven source tree.  Somewhat slower, but can run in parallel.  */
 
+@Deprecated // for now, kept until decided which way to call JHove.
 public class JHoveProcessRunner implements Function<Path, InputStream> {
     private final List<String> command;
     private Map<String, String> environmentVariables;
