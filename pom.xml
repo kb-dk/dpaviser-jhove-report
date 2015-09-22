@@ -15,19 +15,19 @@
     <version>1.0-SNAPSHOT</version>
 
     <!-- jhove snapshots until 1.12 is released officially -->
-
-    <distributionManagement>
+    <repositories>
         <repository>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
             <id>opf-dev-mvn</id>
             <name>opf-dev</name>
             <url>http://artifactory.opf-labs.org/artifactory/opf-dev</url>
         </repository>
-    </distributionManagement>
-
+    </repositories>
 
     <modules>
         <module>dpaviser-jhove-report-main</module>
-        <module>jhove</module>
         <module>sbforge-parent</module>
         <module>newspaper-parent</module>
     </modules>
