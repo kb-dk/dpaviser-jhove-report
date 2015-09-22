@@ -28,10 +28,14 @@ public class XPathHelpers {
      */
     static BiMap<String, XPathExpression> xPathExpressionCache = HashBiMap.create();
 
-    public static Stream<Node> getNodesFor(Document dom, XPathExpression xPathExpression) {
+    /**
+     * Returns a stream of org.w3c.dom.Node corresponding to the NodeList returned by applying xPathExpression to
+     * document.
+     */
+    public static Stream<Node> getNodesFor(Document document, XPathExpression xPathExpression) {
         try {
             // http://stackoverflow.com/a/23361853/53897
-            NodeList nodeList = (NodeList) xPathExpression.evaluate(dom, NODESET);
+            NodeList nodeList = (NodeList) xPathExpression.evaluate(document, NODESET);
             /* No simple way to convert a NodeList to an actual List, so create a Stream of an integer range and map
             it to the corresponding node in the NodeList. */
             return IntStream
@@ -44,8 +48,9 @@ public class XPathHelpers {
 
     /**
      * prepare an XPathExpression with the given expression in the JHove namespace (mapped to <code>j</code>). This
-     * allows the compilation step to be done outside the main stream (i.evalXPathAndApply. only once).  NOT THREAD
-     * SAFE!!
+     * allows the compilation step to be done outside the main stream (i.evalXPathAndApply. only once), and the result
+     * is cached to avoid recompiling later, as well as provide a toString() replacement linking back to the original
+     * expression which is lost during compilation.  NOT THREAD SAFE!!
      */
 
     public static XPathExpression xpathCompile(String expression) {
@@ -65,8 +70,8 @@ public class XPathHelpers {
     }
 
     /**
-     * Evaluate XPath expression on node giving string, (including zero or more transformations (like
-     * URLDecoder::decode)).
+     * Returns a function which evaluate XPath expression on node giving string, (including zero or more transformations
+     * like URLDecoder::decode or String::toLowerCase).
      *
      * @param expression           XPath expression to apply to node.  Note that this can be any node in the entire DOM,
      *                             and that relative paths should be used.

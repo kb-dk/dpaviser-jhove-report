@@ -19,12 +19,15 @@ import java.util.function.Function;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 
+/** helper routines for invoking JHove in order to get in-depth analysis of the files in question */
+
 public class JHoveHelpers {
     /**
      * Create a function which accepts a Path, run jhove (internally through the main method, not by executing an
      * external process) on the Path, and return the output generated.
      */
     public static Function<Path, InputStream> getInternalJHoveInvoker(InputStream config, File tmpDir) {
+
         File tmpDir1 = checkNotNull(tmpDir);
         // http://www.garymcgath.com/jhovenote.html
 
@@ -34,7 +37,7 @@ public class JHoveHelpers {
             configFile = File.createTempFile("jhove", ".conf", tmpDir1);
             Files.copy(checkNotNull(config), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (Exception e) {
-            throw new RuntimeException("could not put configuration in file " + configFile, e);
+            throw new RuntimeException("could not put configuration in file " + configFile.getAbsolutePath(), e);
         }
 
         App app = new App("name", "release", new int[]{2015, 9, 15}, "usage", "rights");
@@ -62,21 +65,21 @@ public class JHoveHelpers {
         // and delete it when closed after reading.
 
         return path -> {
-            String outputFile = null;
+            String outputPath = null;
             try {
-                outputFile = File.createTempFile("jhove", ".xml", tmpDir1).getAbsolutePath();
-                je.dispatch(app, module, null, handler, outputFile, new String[]{path.toString()});
+                outputPath = File.createTempFile("jhove", ".xml", tmpDir1).getAbsolutePath();
+                je.dispatch(app, module, null, handler, outputPath, new String[]{path.toString()});
 
-                final String finalOutputFile = outputFile;
-                return new FileInputStream(finalOutputFile) {
+                final String finalOutputPath = outputPath;
+                return new FileInputStream(finalOutputPath) {
                     @Override
                     public void close() throws IOException {
                         super.close();
-                        new File(finalOutputFile).delete();
+                        new File(finalOutputPath).delete();
                     }
                 };
             } catch (Exception e) {
-                throw new RuntimeException("-> for " + outputFile, e);
+                throw new RuntimeException("-> for " + outputPath, e);
             }
         };
     }

@@ -68,7 +68,7 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                     if (md5FileLine.equalsIgnoreCase(md5calculated.toString())) {
                         row.add("MD5 valid");
                     } else {
-                        row.add("MD5 " + md5FileLine + " expected, found " + md5calculated);
+                        row.add("MD5 " + md5FileLine + " stated in file, calculated " + md5calculated);
                     }
                 } else {
                     row.add("MD5 first line not 32 characters.");
