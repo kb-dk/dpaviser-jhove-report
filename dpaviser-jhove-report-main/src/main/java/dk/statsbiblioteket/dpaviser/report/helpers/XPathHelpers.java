@@ -29,8 +29,8 @@ public class XPathHelpers {
     static BiMap<String, XPathExpression> xPathExpressionCache = HashBiMap.create();
 
     /**
-     * Returns a stream of org.w3c.dom.Node corresponding to the NodeList returned by applying xPathExpression to
-     * document.
+     * Returns a stream of org.w3c.dom.Node corresponding to the NodeList returned by compiling the XPath expression and
+     * apply it to document.
      */
     public static Stream<Node> getNodesFor(Document dom, String expression) {
         return getNodesFor(dom, xpathCompile(expression));
@@ -45,7 +45,7 @@ public class XPathHelpers {
             int nodeListLength = nodeList.getLength();
             return IntStream
                     .range(0, nodeListLength)
-                    .mapToObj(nodeList::item);
+                    .mapToObj(index -> nodeList.item(index));
         } catch (XPathExpressionException e) {
             throw new RuntimeException("evaluate " + xPathExpressionCache.inverse().get(xPathExpression), e);
         }
@@ -53,16 +53,15 @@ public class XPathHelpers {
 
     /**
      * prepare an XPathExpression with the given expression in the JHove namespace (mapped to <code>j</code>). This
-     * allows the compilation step to be done outside the main stream (i.evalXPathAndApply. only once), and the result
-     * is cached to avoid recompiling later, as well as provide a toString() replacement linking back to the original
-     * expression which is lost during compilation.  NOT THREAD SAFE!!
+     * allows the compilation step to be done outside the main stream (i.e. only once), and the result is cached to
+     * avoid recompiling later, as well as provide a toString() replacement linking back to the original expression
+     * which is lost during compilation.  NOT THREAD SAFE!!
      */
 
     public static XPathExpression xpathCompile(String expression) {
         if (xPathExpressionCache.containsKey(expression)) {
             return xPathExpressionCache.get(expression);
         }
-
         try {
             XPath xpath = XPathFactory.newInstance().newXPath();
             xpath.setNamespaceContext(new DefaultNamespaceContext("", "j", "http://hul.harvard.edu/ois/xml/ns/jhove"));
@@ -75,27 +74,22 @@ public class XPathHelpers {
     }
 
     /**
-     * Returns a function which evaluate XPath expression on node giving string, (including zero or more transformations
-     * like URLDecoder::decode or String::toLowerCase).
+     * Returns a function which evaluate XPath expression on node giving a string.
      *
-     * @param expression           XPath expression to apply to node.  Note that this can be any node in the entire DOM,
-     *                             and that relative paths should be used.
-     * @param afterTransformations transformations to apply in sequence to the original value extracted by XPath.
+     * @param xpathExpression XPath expression to apply to node.  Note that this can be any node in the entire DOM, and
+     *                        that relative paths should be used.
      * @return final string value
      */
-    public static Function<Node, String> evalXPathAndApply(String expression, Function<String, String>... afterTransformations) {
+    public static Function<Node, String> evalXPath(String xpathExpression) {
 
-        XPathExpression matcher = xpathCompile(expression);
+        XPathExpression matcher = xpathCompile(xpathExpression);
 
-        return expressionToEvaluate -> {
+        return nodeToEvaluate -> {
             try {
-                String stringToReturn = matcher.evaluate(expressionToEvaluate);
-                for (Function<String, String> function : afterTransformations) {
-                    stringToReturn = function.apply(stringToReturn);
-                }
+                String stringToReturn = matcher.evaluate(nodeToEvaluate);
                 return stringToReturn;
             } catch (XPathExpressionException e) {
-                throw new RuntimeException("bad expression: " + expression, e);
+                throw new RuntimeException("bad expression: " + xpathExpression, e);
             }
         };
     }

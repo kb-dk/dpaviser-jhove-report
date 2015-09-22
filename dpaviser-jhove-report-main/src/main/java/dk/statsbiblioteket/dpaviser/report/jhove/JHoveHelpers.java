@@ -68,6 +68,7 @@ public class JHoveHelpers {
             String outputPath = null;
             try {
                 outputPath = File.createTempFile("jhove", ".xml", tmpDir1).getAbsolutePath();
+                //System.out.println(outputPath);
                 je.dispatch(app, module, null, handler, outputPath, new String[]{path.toString()});
 
                 final String finalOutputPath = outputPath;

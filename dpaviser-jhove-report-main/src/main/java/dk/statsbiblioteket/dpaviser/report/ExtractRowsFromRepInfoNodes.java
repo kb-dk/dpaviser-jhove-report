@@ -30,12 +30,13 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
 
         List<List<String>> rows = new ArrayList<>();
         {
+            long start = System.currentTimeMillis();
             List<String> row = new ArrayList<>();
 
             URI uri;
             String uriString = null;
             try {
-                uriString = XPathHelpers.evalXPathAndApply("@uri").apply(repInfoNode);
+                uriString = XPathHelpers.evalXPath("@uri").apply(repInfoNode);
                 uri = new URI(uriString);
             } catch (URISyntaxException e) {
                 throw new RuntimeException("uriString=" + uriString, e);
@@ -75,15 +76,19 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 }
             } else {
                 // initial few cells, more will come.
-                row.add(XPathHelpers.evalXPathAndApply("./j:size/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPathAndApply("./j:format/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPathAndApply("./j:version/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPathAndApply("./j:status/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPathAndApply("./j:profiles/j:profile/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:size/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
+//                row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));
+                /*
+                row.add(XPathHelpers.evalXPath("./j:version/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:status/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
 
 
-                row.add(XPathHelpers.evalXPathAndApply("./j:messages/j:message/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:messages/j:message/text()").apply(repInfoNode));
+                */
             }
+            row.add((System.currentTimeMillis() - start) + " ms");
             rows.add(row);
         }
         return rows.stream();

@@ -7,7 +7,9 @@ import dk.statsbiblioteket.util.xml.DOM;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,11 +38,10 @@ public class Main {
 
         List<List<String>> cellRows =
                 Files.walk(Paths.get(args[1]))
-                        .filter(Files::isDirectory)
-                        .filter(isSingleEditionDir) // .../infomed/NOR/2015/06/03
-                        .peek(System.out::println)  // see dir names on system out.
+                        .filter(path -> Files.isDirectory(path) == false)
+                                //.peek(System.out::println)  // see dir names on system out.
                         .map(JHoveHelpers.getInternalJHoveInvoker(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
-                        .map(DOM::streamToDOM)
+                        .map(inputStream -> DOM.streamToDOM(inputStream, true))
                         .flatMap(dom -> XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo"))
                         .flatMap(new ExtractRowsFromRepInfoNodes())
                         .collect(toList());
@@ -50,7 +51,25 @@ public class Main {
         try (OutputStream out = new FileOutputStream(args[0])) {
             POIHelpers.workbookFor(cellRows).write(out);
         }
-        // TODO: clean up temp dir.
+
+        // if we get this far, clean up temp dir.  http://stackoverflow.com/a/5039900/53897
+        Path dirPath = tmpDir.toPath();
+        Files.walk(dirPath)
+                .filter(Files::isRegularFile)
+                .forEach((path) -> {
+                    try {
+                        Files.delete(path);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+        // For now do not delete subdirectories (need to delete the tree from the bottom).
+        try {
+            Files.delete(dirPath);
+        } catch (DirectoryNotEmptyException e) {
+            System.out.println("Directory not empty - " + e);
+        }
+
         System.out.println(System.currentTimeMillis() - start + " ms.");
     }
 
