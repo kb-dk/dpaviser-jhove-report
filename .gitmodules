@@ -4,6 +4,3 @@
 [submodule "newspaper-parent"]
 	path = newspaper-parent
 	url = git@github.com:statsbiblioteket/newspaper-parent.git
-[submodule "jhove"]
-	path = jhove
-	url = git@github.com:openpreserve/jhove.git
