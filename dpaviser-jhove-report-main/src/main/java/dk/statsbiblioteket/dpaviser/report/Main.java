@@ -41,14 +41,17 @@ public class Main {
                         .peek(System.out::println)  // see dir names on system out.
                         .map(JHoveHelpers.getInternalJHoveInvoker(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
                         .map(DOM::streamToDOM)
-                        .flatMap(dom -> XPathHelpers.getNodesFor(dom, XPathHelpers.xpathCompile("/j:jhove/j:repInfo")))
+                        .flatMap(dom -> XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo"))
                         .flatMap(new ExtractRowsFromRepInfoNodes())
                         .collect(toList());
 
+        System.out.println(cellRows);
+        System.out.println(cellRows.size());
         try (OutputStream out = new FileOutputStream(args[0])) {
             POIHelpers.workbookFor(cellRows).write(out);
         }
         // TODO: clean up temp dir.
         System.out.println(System.currentTimeMillis() - start + " ms.");
     }
+
 }

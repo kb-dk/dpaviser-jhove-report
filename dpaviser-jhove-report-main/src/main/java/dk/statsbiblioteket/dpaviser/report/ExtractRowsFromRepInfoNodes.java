@@ -78,8 +78,10 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 row.add(XPathHelpers.evalXPathAndApply("./j:size/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPathAndApply("./j:format/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPathAndApply("./j:version/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPathAndApply("./j:mimeType/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPathAndApply("./j:status/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPathAndApply("./j:profiles/j:profile/text()").apply(repInfoNode));
+
+
                 row.add(XPathHelpers.evalXPathAndApply("./j:messages/j:message/text()").apply(repInfoNode));
             }
             rows.add(row);

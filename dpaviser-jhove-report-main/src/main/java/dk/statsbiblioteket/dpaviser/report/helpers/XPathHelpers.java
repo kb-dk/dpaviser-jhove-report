@@ -32,14 +32,19 @@ public class XPathHelpers {
      * Returns a stream of org.w3c.dom.Node corresponding to the NodeList returned by applying xPathExpression to
      * document.
      */
+    public static Stream<Node> getNodesFor(Document dom, String expression) {
+        return getNodesFor(dom, xpathCompile(expression));
+    }
+
     public static Stream<Node> getNodesFor(Document document, XPathExpression xPathExpression) {
         try {
             // http://stackoverflow.com/a/23361853/53897
             NodeList nodeList = (NodeList) xPathExpression.evaluate(document, NODESET);
             /* No simple way to convert a NodeList to an actual List, so create a Stream of an integer range and map
             it to the corresponding node in the NodeList. */
+            int nodeListLength = nodeList.getLength();
             return IntStream
-                    .range(0, nodeList.getLength())
+                    .range(0, nodeListLength)
                     .mapToObj(nodeList::item);
         } catch (XPathExpressionException e) {
             throw new RuntimeException("evaluate " + xPathExpressionCache.inverse().get(xPathExpression), e);
@@ -82,16 +87,17 @@ public class XPathHelpers {
 
         XPathExpression matcher = xpathCompile(expression);
 
-        return e -> {
+        return expressionToEvaluate -> {
             try {
-                String s = matcher.evaluate(e);
-                for (Function<String, String> f : afterTransformations) {
-                    s = f.apply(s);
+                String stringToReturn = matcher.evaluate(expressionToEvaluate);
+                for (Function<String, String> function : afterTransformations) {
+                    stringToReturn = function.apply(stringToReturn);
                 }
-                return s;
-            } catch (XPathExpressionException e1) {
-                throw new RuntimeException("bad expression: " + expression, e1);
+                return stringToReturn;
+            } catch (XPathExpressionException e) {
+                throw new RuntimeException("bad expression: " + expression, e);
             }
         };
     }
+
 }
