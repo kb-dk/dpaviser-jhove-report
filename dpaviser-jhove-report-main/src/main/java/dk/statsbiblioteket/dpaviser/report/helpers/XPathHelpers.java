@@ -64,7 +64,10 @@ public class XPathHelpers {
         }
         try {
             XPath xpath = XPathFactory.newInstance().newXPath();
-            xpath.setNamespaceContext(new DefaultNamespaceContext("", "j", "http://hul.harvard.edu/ois/xml/ns/jhove"));
+            xpath.setNamespaceContext(new DefaultNamespaceContext("",
+                    "j", "http://hul.harvard.edu/ois/xml/ns/jhove",
+                    "mix", "http://www.loc.gov/mix/v20"
+            ));
             XPathExpression xpathExpression = xpath.compile(expression);
             xPathExpressionCache.put(expression, xpathExpression);
             return xpathExpression;

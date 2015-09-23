@@ -20,34 +20,38 @@ import java.util.stream.Stream;
 
 /**
  * Handles a single &lt;j:repInfo&gt; node in a full jhove output.  Return one or more "rows" of "cell values"
- * (corresponding to the number of rows to go in the final spreadsheet). Output must be expected to be sorted.
+ * (corresponding to the number of rows to go in the final spreadsheet). Output must be expected to be sorted later.
  * <p>
  * In separate class as logic is expected to be too complex to fit comfortably in a lambda expression.
  */
 public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<String>>> {
+    public static final String COUNT_JPEG = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='JPEG'])";
+    public static final String COUNT_UNCOMPRESSED = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='Uncompressed'])";
+    public static final String COUNT_FLATEDECODE = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='FlateDecode'])";
+    public static final String COUNT_OTHER_IMAGE_ENCODINGS = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()!='JPEG' and text()!='Uncompressed' and text()!='FlateDecode'])";
+
     @Override
     public Stream<List<String>> apply(Node repInfoNode) {
-
         List<List<String>> rows = new ArrayList<>();
-        {
-            long start = System.currentTimeMillis();
-            List<String> row = new ArrayList<>();
 
-            URI uri;
-            String uriString = null;
-            try {
-                uriString = XPathHelpers.evalXPath("@uri").apply(repInfoNode);
-                uri = new URI(uriString);
-            } catch (URISyntaxException e) {
-                throw new RuntimeException("uriString=" + uriString, e);
-            }
+        // The file name is urlencoded so go through a URI to decode.
+        URI uri;
+        String uriString = null;
+        try {
+            uriString = XPathHelpers.evalXPath("@uri").apply(repInfoNode);
+            uri = new URI(uriString);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("uriString=" + uriString, e);
+        }
 
-            String uriPath = uri.getPath();
+        List<String> row = new ArrayList<>();
 
-            Path path = Paths.get(uriPath);
+        String uriPath = uri.getPath();
+        Path path = Paths.get(uriPath);
 
-            row.add(uriPath);
-            if (uriPath.endsWith(".md5")) { // do checksum check
+        switch (com.google.common.io.Files.getFileExtension(uriPath).toLowerCase()) {
+            case "md5":
+                row.add(uriPath);
                 String md5FileLine = null;
 
                 try {
@@ -74,23 +78,41 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 } else {
                     row.add("MD5 first line not 32 characters.");
                 }
-            } else {
-                // initial few cells, more will come.
+                rows.add(row);
+                break;
+            case "xml": // Infomedia NewsXML dialect -- awaiting feedback from KFC.
+                row.add(uriPath);
                 row.add(XPathHelpers.evalXPath("./j:size/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
-//                row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));
-                /*
+                row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:version/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:status/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
+                rows.add(row);
+                break;
+            case "pdf": // https://github.com/statsbiblioteket/dpaviser-jhove-report/blob/master/PDF-report-elements.md
+                row.add(uriPath);
+                row.add(XPathHelpers.evalXPath("./j:size/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:version/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:status/text()").apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
+                //
+                row.add(XPathHelpers.evalXPath(COUNT_JPEG).apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath(COUNT_UNCOMPRESSED).apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath(COUNT_FLATEDECODE).apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath(COUNT_OTHER_IMAGE_ENCODINGS).apply(repInfoNode));
 
-
-                row.add(XPathHelpers.evalXPath("./j:messages/j:message/text()").apply(repInfoNode));
-                */
-            }
-            row.add((System.currentTimeMillis() - start) + " ms");
-            rows.add(row);
+                row.add("XX");
+                System.out.println(row);
+                rows.add(row);
+                break;
+            default:
+                // don't generate any cells for unrecognized file extensions.
+                break;
         }
+
         return rows.stream();
     }
 }

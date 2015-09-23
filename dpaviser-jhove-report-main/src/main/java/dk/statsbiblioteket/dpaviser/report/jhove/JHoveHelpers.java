@@ -76,6 +76,9 @@ public class JHoveHelpers {
                     @Override
                     public void close() throws IOException {
                         super.close();
+//                        if (path.toString().endsWith(".pdf")) {
+//                            System.out.println(path);
+//                        }
                         new File(finalOutputPath).delete();
                     }
                 };

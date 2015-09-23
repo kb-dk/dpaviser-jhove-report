@@ -13,6 +13,7 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -48,6 +49,18 @@ public class Main {
 
         System.out.println(cellRows);
         System.out.println(cellRows.size());
+
+        Collections.sort(cellRows, (left, right) -> {
+            for (int i = 0; i < Math.min(left.size(), right.size()); i++) {
+                int comparison = left.get(i).compareTo(right.get(i));
+                if (comparison != 0) {
+                    return comparison;
+                }
+            }
+            // one list exhausted without a difference - the shortest is "before" the longest.
+            return right.size() - left.size();
+        });
+
         try (OutputStream out = new FileOutputStream(args[0])) {
             POIHelpers.workbookFor(cellRows).write(out);
         }
