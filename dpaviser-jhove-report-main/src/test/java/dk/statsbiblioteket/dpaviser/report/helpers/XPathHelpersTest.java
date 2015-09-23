@@ -28,6 +28,13 @@ public class XPathHelpersTest {
             assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_UNCOMPRESSED).apply(node), "0", "0 uncompressed billede");
             assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_FLATEDECODE).apply(node), "0", "0 FlateDecode billede");
             assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_OTHER_IMAGE_ENCODINGS).apply(node), "0", "0 uncompressed billede");
+
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TYPE1_FONT).apply(node), "7", "type 1");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TYPE0_FONT).apply(node), "0", "type 0");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TRUETYPE0_FONT).apply(node), "0", "truetype");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_CIDFONTTYPE0_FONT).apply(node), "0", "cidfonttype0");
+
+
             assertEquals(evalXPath("./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Info']/j:values/j:property[j:name/text() = 'Producer']/j:values/j:value/text()").apply(node), "Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)");
         }
      }

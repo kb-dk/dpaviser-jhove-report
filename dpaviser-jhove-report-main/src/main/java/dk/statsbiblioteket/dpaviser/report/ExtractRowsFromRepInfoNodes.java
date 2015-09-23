@@ -29,6 +29,11 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
     public static final String COUNT_UNCOMPRESSED = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='Uncompressed'])";
     public static final String COUNT_FLATEDECODE = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='FlateDecode'])";
     public static final String COUNT_OTHER_IMAGE_ENCODINGS = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Images']/j:values/j:property[j:name/text() = 'Image']/j:values/j:property[j:name/text() = 'NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()!='JPEG' and text()!='Uncompressed' and text()!='FlateDecode'])";
+    public static final String COUNT_TYPE1_FONT = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Fonts']/j:values/j:property[j:name/text() = 'Type1']/j:values/j:property[j:name/text() = 'Font'])";
+    public static final String COUNT_TYPE0_FONT = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Fonts']/j:values/j:property[j:name/text() = 'Type0']/j:values/j:property[j:name/text() = 'Font'])";
+    public static final String COUNT_TRUETYPE0_FONT = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Fonts']/j:values/j:property[j:name/text() = 'TrueType0']/j:values/j:property[j:name/text() = 'Font'])";
+    public static final String COUNT_CIDFONTTYPE0_FONT = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Fonts']/j:values/j:property[j:name/text() = 'CIDFontType0']/j:values/j:property[j:name/text() = 'Font'])";
+    public static final String COUNT_PAGES = "count(./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Pages']/j:values/j:property[j:name/text() = 'Page'])";
 
     @Override
     public Stream<List<String>> apply(Node repInfoNode) {
@@ -103,6 +108,13 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 row.add(XPathHelpers.evalXPath(COUNT_UNCOMPRESSED).apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath(COUNT_FLATEDECODE).apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath(COUNT_OTHER_IMAGE_ENCODINGS).apply(repInfoNode));
+
+                row.add(XPathHelpers.evalXPath(COUNT_TYPE1_FONT).apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath(COUNT_TYPE0_FONT).apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath(COUNT_TRUETYPE0_FONT).apply(repInfoNode));
+                row.add(XPathHelpers.evalXPath(COUNT_CIDFONTTYPE0_FONT).apply(repInfoNode));
+
+                row.add(XPathHelpers.evalXPath(COUNT_PAGES).apply(repInfoNode));
 
                 row.add("XX");
                 System.out.println(row);
