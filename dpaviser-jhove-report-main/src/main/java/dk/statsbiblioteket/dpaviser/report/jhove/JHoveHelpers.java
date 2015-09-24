@@ -52,16 +52,13 @@ public class JHoveHelpers {
 
     private static File readConfigFile(InputStream config, File tmpDir1) throws IOException {
         // First copy the configuration stream to a physical file so JHove can read it.
-        File configFile = null;
-        configFile = File.createTempFile("jhove", ".conf", tmpDir1);
+        File configFile = File.createTempFile("jhove", ".conf", tmpDir1);
         Files.copy(checkNotNull(config), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
         return configFile;
     }
 
     private static JhoveBase getJhoveBase(File tmpDir, File configFile) throws JhoveException {
-        JhoveBase je;
-        je = new JhoveBase();
+        JhoveBase je = new JhoveBase();
         je.setLogLevel("SEVERE");
         je.init(configFile.getAbsolutePath(), null);
         je.setEncoding("utf-8");
