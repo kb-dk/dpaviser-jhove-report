@@ -47,7 +47,7 @@ public class Main {
         Stream<Path> dataFiles = Files.walk(Paths.get(args[1]))
                 .filter(path -> !Files.isDirectory(path));
 
-        InputStream config = Thread.currentThread().getContextClassLoader().getResourceAsStream("/jhove.config.xml");
+        InputStream config = Main.class.getResourceAsStream("/jhove.config.xml");
         Function<Path, InputStream> jHoveInvoker = JHoveHelpers.getInternalJHoveInvoker(config, tmpDir);
         Stream<Document> jhoveResults = dataFiles
                 .map(jHoveInvoker)
