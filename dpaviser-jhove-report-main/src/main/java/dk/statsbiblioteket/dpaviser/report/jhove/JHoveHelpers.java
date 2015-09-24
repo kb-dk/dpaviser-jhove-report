@@ -1,5 +1,6 @@
 package dk.statsbiblioteket.dpaviser.report.jhove;
 
+import dk.statsbiblioteket.dpaviser.report.helpers.UtilException;
 import edu.harvard.hul.ois.jhove.App;
 import edu.harvard.hul.ois.jhove.JhoveBase;
 import edu.harvard.hul.ois.jhove.JhoveException;
@@ -29,7 +30,7 @@ public class JHoveHelpers {
      * Create a function which accepts a Path, run jhove (internally through the main method, not by executing an
      * external process) on the Path, and return the output generated.
      */
-    public static Function<Path, InputStream> getInternalJHoveInvoker(InputStream config, File tmpDir) {
+    public static Function<Path, InputStream> getInternalJHoveInvoker(InputStream config, File tmpDir) throws JhoveException, IOException {
 
         File configFile = readConfigFile(config, checkNotNull(tmpDir));
 
@@ -41,48 +42,28 @@ public class JHoveHelpers {
         final OutputHandler jhoveAboutHandler = null;
 
 
-        Function<Path, InputStream> jhoveFunction = dataFilePath -> {
+        return UtilException.rethrowFunction(dataFilePath -> {
             final String jhoveResultFile;
-            try {
-                jhoveResultFile = File.createTempFile("jhove", ".xml", tmpDir).getAbsolutePath();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to create temporary jhove result file in " + tmpDir, e);
-            }
-            try {
-                je.dispatch(jhoveApp, jhoveModule, jhoveAboutHandler, jhoveOutputHandler, jhoveResultFile, new String[]{dataFilePath.toString()});
-                return new SelfDeletingFileInputStream(jhoveResultFile);
-            } catch (Exception e) {
-                throw new RuntimeException(dataFilePath + " -> for " + jhoveResultFile, e);
-            }
-        };
-        return jhoveFunction;
+            jhoveResultFile = File.createTempFile("jhove", ".xml", tmpDir).getAbsolutePath();
+            je.dispatch(jhoveApp, jhoveModule, jhoveAboutHandler, jhoveOutputHandler, jhoveResultFile, new String[]{dataFilePath.toString()});
+            return new SelfDeletingFileInputStream(jhoveResultFile);
+        });
     }
 
-    private static File readConfigFile(InputStream config, File tmpDir1) {
+    private static File readConfigFile(InputStream config, File tmpDir1) throws IOException {
         // First copy the configuration stream to a physical file so JHove can read it.
         File configFile = null;
-        try {
-            configFile = File.createTempFile("jhove", ".conf", tmpDir1);
-            Files.copy(checkNotNull(config), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new RuntimeException("could not put configuration in file " + configFile, e);
-        }
+        configFile = File.createTempFile("jhove", ".conf", tmpDir1);
+        Files.copy(checkNotNull(config), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
         return configFile;
     }
 
-    private static JhoveBase getJhoveBase(File tmpDir, File configFile) {
+    private static JhoveBase getJhoveBase(File tmpDir, File configFile) throws JhoveException {
         JhoveBase je;
-        try {
-            je = new JhoveBase();
-        } catch (JhoveException e) {
-            throw new RuntimeException("new JhoveBase()", e);
-        }
+        je = new JhoveBase();
         je.setLogLevel("SEVERE");
-        try {
-            je.init(configFile.getAbsolutePath(), null);
-        } catch (JhoveException e) {
-            throw new RuntimeException("JHove initialization with " + configFile.getAbsolutePath(), e);
-        }
+        je.init(configFile.getAbsolutePath(), null);
         je.setEncoding("utf-8");
         je.setTempDirectory(tmpDir.getAbsolutePath());
         je.setBufferSize(4096);

@@ -4,10 +4,13 @@ import dk.statsbiblioteket.dpaviser.report.helpers.POIHelpers;
 import dk.statsbiblioteket.dpaviser.report.helpers.XPathHelpers;
 import dk.statsbiblioteket.dpaviser.report.jhove.JHoveHelpers;
 import dk.statsbiblioteket.util.xml.DOM;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
@@ -15,9 +18,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import static dk.statsbiblioteket.dpaviser.report.helpers.UtilException.rethrowFunction;
 import static java.util.stream.Collectors.toList;
 
 public class Main {
@@ -37,15 +43,19 @@ public class Main {
         // Locate all dirs corresponding to a single edition, run jhove on them, and extract
         // one or more row of cells for each file.  Create a spreadsheet corresponding to the rows.
 
-        List<List<String>> cellRows =
-                Files.walk(Paths.get(args[1]))
-                        .filter(path -> Files.isDirectory(path) == false)
-                                //.peek(System.out::println)  // see dir names on system out.
-                        .map(JHoveHelpers.getInternalJHoveInvoker(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
-                        .map(inputStream -> DOM.streamToDOM(inputStream, true))
-                        .flatMap(dom -> XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo"))
-                        .flatMap(new ExtractRowsFromRepInfoNodes())
-                        .collect(toList());
+
+        Stream<Path> dataFiles = Files.walk(Paths.get(args[1]))
+                .filter(path -> !Files.isDirectory(path));
+
+        InputStream config = Thread.currentThread().getContextClassLoader().getResourceAsStream("/jhove.config.xml");
+        Function<Path, InputStream> jHoveInvoker = JHoveHelpers.getInternalJHoveInvoker(config, tmpDir);
+        Stream<Document> jhoveResults = dataFiles
+                .map(jHoveInvoker)
+                .map(inputStream -> DOM.streamToDOM(inputStream, true));
+
+        Function<Document, Stream<Node>> getRepInfoMapper = rethrowFunction(dom -> XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo"));
+        Function<Node, Stream<List<String>>> extractInfoMapper = rethrowFunction(new ExtractRowsFromRepInfoNodes());
+        List<List<String>> cellRows = jhoveResults.flatMap(getRepInfoMapper).flatMap(extractInfoMapper).collect(toList());
 
         System.out.println(cellRows.size() + " rows.");
 
@@ -72,7 +82,7 @@ public class Main {
                     try {
                         Files.delete(path);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        //ignore
                     }
                 });
         // For now do not delete subdirectories (need to delete the tree from the bottom).
