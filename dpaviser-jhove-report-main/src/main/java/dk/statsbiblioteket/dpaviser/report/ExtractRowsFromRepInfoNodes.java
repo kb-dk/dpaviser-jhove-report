@@ -92,7 +92,6 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:version/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:status/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
                 rows.add(row);
                 break;
             case "pdf": // https://github.com/statsbiblioteket/dpaviser-jhove-report/blob/master/PDF-report-elements.md
@@ -102,7 +101,6 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:version/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:status/text()").apply(repInfoNode));
-                row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
                 //
                 row.add(XPathHelpers.evalXPath(COUNT_JPEG).apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath(COUNT_UNCOMPRESSED).apply(repInfoNode));

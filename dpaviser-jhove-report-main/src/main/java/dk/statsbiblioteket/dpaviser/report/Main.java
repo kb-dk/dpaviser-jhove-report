@@ -47,8 +47,7 @@ public class Main {
                         .flatMap(new ExtractRowsFromRepInfoNodes())
                         .collect(toList());
 
-        System.out.println(cellRows);
-        System.out.println(cellRows.size());
+        System.out.println(cellRows.size() + " rows.");
 
         Collections.sort(cellRows, (left, right) -> {
             for (int i = 0; i < Math.min(left.size(), right.size()); i++) {
