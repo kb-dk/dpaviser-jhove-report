@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
+import javax.xml.transform.TransformerException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class XPathHelpersTest {
 
         List<Node> l = XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo").collect(toList());
         assertEquals(l.size(), 1);
-        for(Node node: l) {
+        for (Node node : l) {
             assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_JPEG).apply(node), "1", "1 jpeg encoded billede");
             assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_UNCOMPRESSED).apply(node), "0", "0 uncompressed billede");
             assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_FLATEDECODE).apply(node), "0", "0 FlateDecode billede");
@@ -37,5 +38,68 @@ public class XPathHelpersTest {
 
             assertEquals(evalXPath("./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Info']/j:values/j:property[j:name/text() = 'Producer']/j:values/j:value/text()").apply(node), "Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)");
         }
-     }
+    }
+
+    @Test
+    public void testSingleEditionJHoveOutput() {
+        InputStream is = checkNotNull(getClass().getResourceAsStream("/single-edition-jhove-output.xml"));
+        Document dom = DOM.streamToDOM(is, true);
+
+        System.out.println(">>" + XPathHelpers.evalXPath("namespace-uri(/j:jhove/j:repInfo)").apply(dom) + "<<");
+        XPathHelpers.getNodesFor(dom, "name(/*)").map((java.util.function.Function<Node, String>) (dom1) -> {
+            try {
+                return DOM.domToString(dom1);
+            } catch (TransformerException e) {
+                throw new RuntimeException("domToString", e);
+            }
+        }).map(s->s.substring(0, Math.min(100, s.length()))).forEach(System.out::println);
+
+        List<Node> l = XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo").collect(toList());
+        assertEquals(l.size(), 1);
+        for (Node node : l) {
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_JPEG).apply(node), "1", "1 jpeg encoded billede");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_UNCOMPRESSED).apply(node), "0", "0 uncompressed billede");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_FLATEDECODE).apply(node), "0", "0 FlateDecode billede");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_OTHER_IMAGE_ENCODINGS).apply(node), "0", "0 uncompressed billede");
+
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TYPE1_FONT).apply(node), "7", "type 1");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TYPE0_FONT).apply(node), "0", "type 0");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TRUETYPE0_FONT).apply(node), "0", "truetype");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_CIDFONTTYPE0_FONT).apply(node), "0", "cidfonttype0");
+
+
+            assertEquals(evalXPath("./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Info']/j:values/j:property[j:name/text() = 'Producer']/j:values/j:value/text()").apply(node), "Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)");
+        }
+    }
+    @Test
+    public void testJHoveJyp1Output() {
+        InputStream is = checkNotNull(getClass().getResourceAsStream("/jhove-jyp-1.xml"));
+        Document dom = DOM.streamToDOM(is, true);
+
+        System.out.println(">>" + XPathHelpers.evalXPath("namespace-uri(/j:jhove/j:repInfo)").apply(dom) + "<<");
+        XPathHelpers.getNodesFor(dom, "name(/*)").map((java.util.function.Function<Node, String>) (dom1) -> {
+            try {
+                return DOM.domToString(dom1);
+            } catch (TransformerException e) {
+                throw new RuntimeException("domToString", e);
+            }
+        }).map(s->s.substring(0, Math.min(100, s.length()))).forEach(System.out::println);
+
+        List<Node> l = XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo").collect(toList());
+        assertEquals(l.size(), 1);
+        for (Node node : l) {
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_JPEG).apply(node), "1", "1 jpeg encoded billede");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_UNCOMPRESSED).apply(node), "0", "0 uncompressed billede");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_FLATEDECODE).apply(node), "0", "0 FlateDecode billede");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_OTHER_IMAGE_ENCODINGS).apply(node), "0", "0 uncompressed billede");
+
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TYPE1_FONT).apply(node), "7", "type 1");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TYPE0_FONT).apply(node), "0", "type 0");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_TRUETYPE0_FONT).apply(node), "0", "truetype");
+            assertEquals(evalXPath(ExtractRowsFromRepInfoNodes.COUNT_CIDFONTTYPE0_FONT).apply(node), "0", "cidfonttype0");
+
+
+            assertEquals(evalXPath("./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Info']/j:values/j:property[j:name/text() = 'Producer']/j:values/j:value/text()").apply(node), "Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)");
+        }
+    }
 }

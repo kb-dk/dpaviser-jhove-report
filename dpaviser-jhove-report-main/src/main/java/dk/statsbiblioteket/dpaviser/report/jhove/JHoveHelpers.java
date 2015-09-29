@@ -29,7 +29,7 @@ public class JHoveHelpers {
      * Create a function which accepts a Path, run jhove (internally through the main method, not by executing an
      * external process) on the Path, and return the output generated.
      */
-    public static Function<Path, InputStream> getInternalJHoveInvoker(InputStream config, File tmpDir) {
+    public static Function<Path, InputStream> getJHoveFunction(InputStream config, File tmpDir) {
 
         File configFile = readConfigFile(config, checkNotNull(tmpDir));
 

@@ -5,10 +5,13 @@ import dk.statsbiblioteket.dpaviser.report.helpers.POIHelpers;
 import dk.statsbiblioteket.dpaviser.report.helpers.XPathHelpers;
 import dk.statsbiblioteket.dpaviser.report.jhove.JHoveHelpers;
 import dk.statsbiblioteket.util.xml.DOM;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,8 +19,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -30,25 +32,16 @@ public class Main {
         long start = System.currentTimeMillis();
 
         File tmpDir = com.google.common.io.Files.createTempDir();
-        System.out.println(tmpDir.getAbsolutePath());
-        new File(tmpDir, "a").mkdir();
-        new File(tmpDir, "a/b").mkdir();
-        new File(tmpDir, "c").mkdir();
 
-        Pattern singleEditionDirPattern = Pattern.compile("^.*/[A-Z0-9]+/[0-9]{4}/(0[1-9]|1[0-2])/(0[1-9]|[12][0-9]|3[01])$");
-
-        Predicate<Path> isSingleEditionDir = path -> singleEditionDirPattern.matcher(path.toString()).matches();
-
-        // Locate all dirs corresponding to a single edition, run jhove on them, and extract
+        // Find all files in the given directory tree, run jhove on them, and extract
         // one or more row of cells for each file.  Create a spreadsheet corresponding to the rows.
 
         List<List<String>> cellRows =
                 Files.walk(Paths.get(args[1]))
                         .filter(path -> Files.isDirectory(path) == false)
-                                //.peek(System.out::println)  // see dir names on system out.
-                        .map(JHoveHelpers.getInternalJHoveInvoker(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
-                        .map(inputStream -> DOM.streamToDOM(inputStream, true))
-                        .flatMap(dom -> XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo"))
+                        .map(JHoveHelpers.getJHoveFunction(Main.class.getResourceAsStream("/jhove.config.xml"), tmpDir))
+                        .map(Main::streamToDOMWithNamespaces)
+                        .flatMap(Main::getRepInfoNodes)
                         .flatMap(new ExtractRowsFromRepInfoNodes())
                         .collect(toList());
 
@@ -63,6 +56,14 @@ public class Main {
         deleteTreeBelowPath(tmpDir.toPath());
 
         System.out.println(System.currentTimeMillis() - start + " ms.");
+    }
+
+    public static Stream<Node> getRepInfoNodes(Document dom) {
+        return XPathHelpers.getNodesFor(dom, "/j:jhove/j:repInfo");
+    }
+
+    public static Document streamToDOMWithNamespaces(InputStream inputStream) {
+        return DOM.streamToDOM(inputStream, true);
     }
 
     /**
