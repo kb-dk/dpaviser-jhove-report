@@ -1,6 +1,7 @@
 [submodule "sbforge-parent"]
 	path = sbforge-parent
 	url = git@github.com:statsbiblioteket/sbforge-parent.git
+	branch = sbforge-parent-18-branch
 [submodule "newspaper-parent"]
 	path = newspaper-parent
 	url = git@github.com:statsbiblioteket/newspaper-parent.git
