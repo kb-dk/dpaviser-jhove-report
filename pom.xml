@@ -6,7 +6,7 @@
         <groupId>dk.statsbiblioteket.newspaper</groupId>
         <artifactId>newspaper-parent</artifactId>
         <version>1.5</version>
-        <relativePath>newspaper-parent</relativePath>
+        <relativePath>newspaper-parent/pom.xml</relativePath>
     </parent>
 
     <groupId>dk.statsbiblioteket.dpaviser</groupId>

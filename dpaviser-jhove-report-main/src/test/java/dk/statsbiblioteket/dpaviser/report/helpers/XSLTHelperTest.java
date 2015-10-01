@@ -1,16 +1,27 @@
 package dk.statsbiblioteket.dpaviser.report.helpers;
 
 import dk.statsbiblioteket.util.xml.XSLT;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.testng.annotations.Test;
 
 import javax.xml.transform.TransformerException;
+import java.util.ArrayList;
+import java.util.List;
 
+import static java.util.Arrays.asList;
+import static org.jsoup.Jsoup.parse;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test
 public class XSLTHelperTest {
 
     public void testJhoveJyp1XSLT() throws TransformerException {
+
+        String result = XSLT.transform(getClass().getResource("/pdf-process-jhove-output.xsl"),
+                getClass().getResourceAsStream("/jhove-jyp-1.xml"),
+                null).toString();
 
         assertEquals("<!DOCTYPE html><html>\n" +
                 "<table>\n" +
@@ -19,35 +30,32 @@ public class XSLTHelperTest {
                 "</tr>\n" +
                 "</table>\n" +
                 "</html>\n",
-                XSLT.transform(getClass().getResource("/pdf-process-jhove-output.xsl"),
-                        getClass().getResourceAsStream("/jhove-jyp-1.xml"),
-                        null).toString());
+                result);
+
+        List<List<String>> l = getFirstHtmlTable(result);
+        assertEquals(asList(asList("./JYP/2015/06/05/JYP20150605L14%230022.pdf", "21", "1", "21", "0", "3", "1", "4", "3", "1")), l);
     }
 
-//    public String applyXSLT(String xsltResourceName, String inputXMLResourceName) {
-//        Transformer transformer = null;
-//        try {
-//            URL resource = checkNotNull(getClass().getResource(xsltResourceName), xsltResourceName + " not found");
-//            transformer = XSLT.createTransformer(resource);
-//        } catch (TransformerException e) {
-//            throw new RuntimeException("could not create transformer for " + xsltResourceName, e);
-//        }
-//        Reader reader = new InputStreamReader(getClass().getResourceAsStream(inputXMLResourceName), Charsets.UTF_8);
-//        StringWriter stringWriter = new StringWriter();
-//
-//        final XMLReader xmlReader;
-//        try {
-//            xmlReader = XMLReaderFactory.createXMLReader();
-//        } catch (SAXException e) {
-//            throw new RuntimeException("could not create transformer", e);
-//        }
-//        try {
-//            transformer.transform(new SAXSource(xmlReader, new InputSource(reader)), new StreamResult(stringWriter));
-//        } catch (TransformerException e) {
-//            throw new RuntimeException("could not transform " + inputXMLResourceName + " with " + xsltResourceName, e);
-//        }
-//
-//        return stringWriter.toString();
-//    }
+    public List<List<String>> getFirstHtmlTable(String result) {
+        // http://stackoverflow.com/a/24773413/53897
+        List<List<String>> tableList = new ArrayList<>();
+        {
+            Document doc = parse(result);
+            Element table = doc.select("table").get(0);
+            Elements rows = table.select("tr");
+            for (int i = 0; i < rows.size(); i++) {
+                List<String> rowList = new ArrayList<>();
+
+                Element row = rows.get(i);
+                Elements cols = row.select("td");
+                for (int j = 0; j < cols.size(); j++) {
+                    rowList.add(cols.get(j).text());
+                }
+                tableList.add(rowList);
+            }
+        }
+        System.out.println(tableList);
+        return tableList;
+    }
 }
 

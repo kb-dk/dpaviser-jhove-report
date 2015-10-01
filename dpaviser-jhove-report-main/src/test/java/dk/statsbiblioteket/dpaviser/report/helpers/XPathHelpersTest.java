@@ -2,7 +2,6 @@ package dk.statsbiblioteket.dpaviser.report.helpers;
 
 import dk.statsbiblioteket.dpaviser.report.ExtractRowsFromRepInfoNodes;
 import dk.statsbiblioteket.util.xml.DOM;
-import org.testng.annotations.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -17,7 +16,7 @@ import static org.testng.Assert.assertEquals;
 
 public class XPathHelpersTest {
 
-    @Test
+    //@Test
     public void testSinglePDFJHoveOutput() {
         InputStream is = checkNotNull(getClass().getResourceAsStream("/single-pdf-jhove-output.xml"));
         Document dom = DOM.streamToDOM(is, true);
@@ -40,7 +39,7 @@ public class XPathHelpersTest {
         }
     }
 
-    @Test
+    //@Test
     public void testSingleEditionJHoveOutput() {
         InputStream is = checkNotNull(getClass().getResourceAsStream("/single-edition-jhove-output.xml"));
         Document dom = DOM.streamToDOM(is, true);
@@ -71,7 +70,7 @@ public class XPathHelpersTest {
             assertEquals(evalXPath("./j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text() = 'Info']/j:values/j:property[j:name/text() = 'Producer']/j:values/j:value/text()").apply(node), "Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)");
         }
     }
-    @Test
+    //@Test
     public void testJHoveJyp1Output() {
         InputStream is = checkNotNull(getClass().getResourceAsStream("/jhove-jyp-1.xml"));
         Document dom = DOM.streamToDOM(is, true);
