@@ -40,7 +40,8 @@ import static java.util.stream.Collectors.toList;
 
 public class Main {
 
-    public static final List<String> HEADERS = asList("Name", "Type");
+    public static final List<String> HEADERS = asList("Name", "Type", "PDF:JPEG", "PDF:UNCOMPRESSED", "PDF:FLATEDECODE",
+            "PDF:OTHERIMAGES", "PDF:TYPE0", "PDF:TYPE1", "PDF:TRUETYPE", "PDF:OTHERFONTS");
 
     protected static DocumentBuilderFactory documentBuilderFactory;
 
@@ -76,7 +77,7 @@ public class Main {
         System.out.println(System.currentTimeMillis() - start + " ms.");
     }
 
-    protected static Stream<List<String>> getRowsForPath(Path path, File tmpDir)  {
+    protected static Stream<List<String>> getRowsForPath(Path path, File tmpDir) {
         List<List<String>> result = new ArrayList<>();
 
         String pathString = path.toString();
@@ -179,8 +180,7 @@ public class Main {
         }
     }
 
-    static class MyErrorHandler implements ErrorHandler
-    {
+    static class MyErrorHandler implements ErrorHandler {
         @Override
         public void warning(SAXParseException exception) throws SAXException {
             throw exception;
@@ -195,5 +195,7 @@ public class Main {
         public void fatalError(SAXParseException exception) throws SAXException {
             throw exception;
         }
-    };
+    }
+
+    ;
 }
