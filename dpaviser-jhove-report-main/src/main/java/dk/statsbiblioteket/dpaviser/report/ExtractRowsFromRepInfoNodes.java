@@ -96,6 +96,7 @@ public class ExtractRowsFromRepInfoNodes implements Function<Node, Stream<List<S
                 break;
             case "pdf": // https://github.com/statsbiblioteket/dpaviser-jhove-report/blob/master/PDF-report-elements.md
                 row.add(uriPath);
+
                 row.add(XPathHelpers.evalXPath("./j:size/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:profiles/j:profile/text()").apply(repInfoNode));
                 row.add(XPathHelpers.evalXPath("./j:format/text()").apply(repInfoNode));

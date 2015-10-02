@@ -20,9 +20,8 @@ http://www.loc.gov/mix/v20 http://www.loc.gov/standards/mix/mix20/mix20.xsd"
 
     <xsl:template match="/j:jhove/j:repInfo">
         <tr>
-            <td>
-                <xsl:value-of select="@uri"/>
-            </td>
+            <td><xsl:value-of select="@uri"/></td>
+            <td>PDF</td>
             <xsl:for-each select="j:properties/j:property/j:values/j:property[j:name='Images']">
                 <xsl:variable name="JPEG" select="count(j:values/j:property[j:name='Image']/j:values/j:property[j:name='NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='JPEG'])"/>
                 <td>
