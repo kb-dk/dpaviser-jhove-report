@@ -77,7 +77,8 @@ public class JHoveHelpers {
         } catch (JhoveException e) {
             throw new RuntimeException("new JhoveBase()", e);
         }
-        je.setLogLevel("SEVERE");
+        //je.setLogLevel("SEVERE");
+        je.setLogLevel("OFF"); // get rid of annoying "Testing SEVERE" log message.
         try {
             je.init(configFile.getAbsolutePath(), null);
         } catch (JhoveException e) {
@@ -92,14 +93,14 @@ public class JHoveHelpers {
     }
 
     /**
-     * This file input stream will delete its file on closed.
+     * This file input stream will delete its underlying file on closed.
      */
-    private static class SelfDeletingFileInputStream extends FileInputStream {
-        private final String outputPath;
+    public static class SelfDeletingFileInputStream extends FileInputStream {
+        private final String outputFileName;
 
-        public SelfDeletingFileInputStream(String outputPath) throws FileNotFoundException {
-            super(outputPath);
-            this.outputPath = outputPath;
+        public SelfDeletingFileInputStream(String outputFileName) throws FileNotFoundException {
+            super(outputFileName);
+            this.outputFileName = outputFileName;
         }
 
         /**
@@ -110,7 +111,7 @@ public class JHoveHelpers {
         @Override
         public void close() throws IOException {
             super.close();
-            new File(outputPath).delete();
+            new File(outputFileName).delete();  // for our purposes this is good enough.
         }
     }
 }

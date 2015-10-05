@@ -5,12 +5,11 @@ import com.google.common.hash.Hashing;
 import dk.statsbiblioteket.dpaviser.report.helpers.CellRowComparator;
 import dk.statsbiblioteket.dpaviser.report.helpers.JSoupHelpers;
 import dk.statsbiblioteket.dpaviser.report.helpers.POIHelpers;
+import dk.statsbiblioteket.dpaviser.report.helpers.PathHelpers;
 import dk.statsbiblioteket.dpaviser.report.jhove.JHoveHelpers;
+import dk.statsbiblioteket.dpaviser.report.sax.ExceptionThrowingErrorHandler;
 import dk.statsbiblioteket.util.xml.XSLT;
 import org.w3c.dom.Document;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -20,7 +19,6 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
@@ -45,44 +43,12 @@ public class Main {
 
     protected static DocumentBuilderFactory documentBuilderFactory;
 
-    public static void main(String[] args) throws Exception {
-        if (args.length < 1) {
-            System.err.println("Usage: java " + Main.class.getName() + " spreadsheet.xsl infomedia-dump-dir");
-        }
-        long start = System.currentTimeMillis();
-
-        File tmpDir = com.google.common.io.Files.createTempDir();
-
-        /* Find all files in the given directory tree, and extract
-         one or more row of cells for each file.  Create a spreadsheet corresponding to the rows.
-         */
-
-        List<List<String>> cellRows =
-                Files.walk(Paths.get(args[1]))
-                        .filter(Files::isRegularFile)
-                        .flatMap(path -> Main.getRowsForPath(path, tmpDir))
-                        .collect(toList());
-
-        System.out.println(cellRows.size() + " rows.");
-
-        Collections.sort(cellRows, new CellRowComparator());
-        cellRows.add(0, HEADERS); // How to mark rows as headers in workbook sheet
-
-        try (OutputStream out = new FileOutputStream(args[0])) {
-            POIHelpers.workbookFor(cellRows).write(out);
-        }
-
-        deleteTreeBelowPath(tmpDir.toPath());
-
-        System.out.println(System.currentTimeMillis() - start + " ms.");
-    }
-
     protected static Stream<List<String>> getRowsForPath(Path path, File tmpDir) {
         List<List<String>> result = new ArrayList<>();
 
         String pathString = path.toString();
-        if (pathString.endsWith(".pdf")) {
-            // run jhove and extract information
+
+        if (pathString.endsWith(".pdf")) { // PDF: run jhove and extract information
             InputStream configStream = Main.class.getResourceAsStream("/jhove.config.xml");
             Function<Path, InputStream> jHoveFunction = JHoveHelpers.getJHoveFunction(configStream, tmpDir);
 
@@ -90,13 +56,13 @@ public class Main {
 
             try {
                 URL pdfXSLT = Thread.currentThread().getContextClassLoader().getResource("pdf-process-jhove-output.xsl");
-                String tableXML = XSLT.transform(pdfXSLT, is, null).toString(); // caches compiled stylesheet
+
+                String tableXML = XSLT.transform(pdfXSLT, is, null).toString(); // sbutil caches compiled stylesheet
 
                 List<List<String>> firstTableFromHTML = JSoupHelpers.getFirstTableFromHTML(tableXML);
 
-                // URI decode path in first cell before adding. Cannot be done easily inside XSLT 1.0
                 List<String> firstRow = firstTableFromHTML.get(0);
-                firstRow.set(0, new URI(firstRow.get(0)).getPath());
+                firstRow.set(0, new URI(firstRow.get(0)).getPath()); // URLDecode. Hard in XSLT 1.0.
 
                 result.addAll(firstTableFromHTML);
             } catch (TransformerException e) {
@@ -104,33 +70,36 @@ public class Main {
             } catch (URISyntaxException e) {
                 throw new RuntimeException("bad URI returned from XSLT", e);
             }
-        } else if (pathString.endsWith(".xml")) {
+        } else if (pathString.endsWith(".xml")) { // XML:  Validate.
             try {
                 if (documentBuilderFactory == null) {
                     documentBuilderFactory = DocumentBuilderFactory.newInstance();
                     documentBuilderFactory.setNamespaceAware(true);
                     SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-                    schemaFactory.setErrorHandler(new MyErrorHandler());
+                    schemaFactory.setErrorHandler(new ExceptionThrowingErrorHandler());
                     Schema schema = schemaFactory.newSchema(Main.class.getResource("/NewsML_1.2-infomedia.xsd"));
 
                     documentBuilderFactory.setSchema(schema);
                 }
                 DocumentBuilder db = documentBuilderFactory.newDocumentBuilder();
-                db.setErrorHandler(new MyErrorHandler());
+                db.setErrorHandler(new ExceptionThrowingErrorHandler());
                 Document document = db.parse(path.toUri().toString());
                 result.add(asList(pathString, "XML", "XML valid"));
+
+                // TODO:  Add more XML information from KFC.
             } catch (Exception e) {
                 result.add(asList(pathString, "XML", "XML not valid", e.getMessage()));
             }
         } else if (pathString.endsWith(".md5")) {
+            // compare value in this file with value calculated.
             final List<String> row;
             try {
                 String md5FileLine = Files.readAllLines(path).get(0);
                 if (md5FileLine.length() != 32) {
                     row = asList(pathString, "MD5", "MD5 first line not 32 characters.");
                 } else {
-                    File fileToHash = new File(pathString.substring(0, pathString.length() - ".md5".length()));
-                    HashCode md5calculated = com.google.common.io.Files.hash(fileToHash, Hashing.md5());
+                    String originalFileName = pathString.substring(0, pathString.length() - ".md5".length());
+                    HashCode md5calculated = com.google.common.io.Files.hash(new File(originalFileName), Hashing.md5());
                     if (md5FileLine.equalsIgnoreCase(md5calculated.toString())) {
                         row = asList(pathString, "MD5", "MD5 valid");
                     } else {
@@ -148,54 +117,33 @@ public class Main {
     }
 
     /**
-     * Delete the whole file tree below the given path.  Files first while traversing, and the directories at the end.
-     */
-    private static void deleteTreeBelowPath(Path startHerePath) throws IOException {
-        List<Path> dirPaths = new ArrayList<>();
-
-        // Delete files as we see them.  Save directories for deletion later.
-        Files.walk(startHerePath)
-                .forEach(path -> {
-                    if (Files.isDirectory(path)) {
-                        dirPaths.add(path);
-                    } else {
-                        try {
-                            Files.delete(path);
-                        } catch (IOException e) {
-                            e.printStackTrace(); // so we can continue even if a file is open.
-                        }
-                    }
-                });
-
-        Collections.sort(dirPaths);
-        Collections.reverse(dirPaths);
-
-        for (Path path : dirPaths) {
-            try {
-                //System.out.println(path);
-                Files.delete(path);
-            } catch (IOException e) {
-                System.out.println("Could not delete " + path + ": " + e); // better suggestions?
-            }
+     * main looks at all the files in a given part of an infomedia delivery and analyze each file, collecting
+     * the result in a Excel file.
+     * */
+    public static void main(String[] args) throws Exception {
+        if (args.length < 1) {
+            System.err.println("Usage: java " + Main.class.getName() + " spreadsheet.xsl infomedia-dump-dir");
         }
+
+        File tmpDir = com.google.common.io.Files.createTempDir();
+
+        /* Find all files in the given directory tree, and extract
+         one or more row of cells for each file.  Create a spreadsheet corresponding to the rows.
+         */
+
+        List<List<String>> cellRows =
+                Files.walk(Paths.get(args[1]))
+                        .filter(Files::isRegularFile)
+                        .flatMap(path -> Main.getRowsForPath(path, tmpDir))
+                        .collect(toList());
+
+        Collections.sort(cellRows, new CellRowComparator());
+        cellRows.add(0, HEADERS); // How to mark rows as headers in workbook sheet
+
+        try (OutputStream out = new FileOutputStream(args[0])) {
+            POIHelpers.workbookFor(cellRows).write(out);
+        }
+
+        PathHelpers.deleteTreeBelowPath(tmpDir.toPath());
     }
-
-    static class MyErrorHandler implements ErrorHandler {
-        @Override
-        public void warning(SAXParseException exception) throws SAXException {
-            throw exception;
-        }
-
-        @Override
-        public void error(SAXParseException exception) throws SAXException {
-            throw exception;
-        }
-
-        @Override
-        public void fatalError(SAXParseException exception) throws SAXException {
-            throw exception;
-        }
-    }
-
-    ;
 }

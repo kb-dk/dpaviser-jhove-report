@@ -10,7 +10,10 @@ import java.util.List;
 public class CellRowComparator implements Comparator<List<String>> {
     @Override
     public int compare(List<String> left, List<String> right) {
-        for (int i = 0; i < Math.min(left.size(), right.size()); i++) {
+
+        int itemsInShortestList = Math.min(left.size(), right.size());
+
+        for (int i = 0; i < itemsInShortestList; i++) {
             int comparison = left.get(i).compareTo(right.get(i));
             if (comparison != 0) {
                 return comparison;
