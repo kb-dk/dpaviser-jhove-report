@@ -14,5 +14,6 @@ Copy
    run-after-upload.sh
 
 to target location (currently dpaviser@achernar/dpaviser-rapporter) and ask
-Jens-Henrik to update pseudoprod.
+Jens-Henrik to update pseudoprod.  Remember to chmod +x on run-after-upload.sh
+
 
