@@ -8,6 +8,7 @@ import edu.harvard.hul.ois.jhove.OutputHandler;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -19,68 +20,98 @@ import java.util.function.Function;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 
-/** helper routines for invoking JHove in order to get in-depth analysis of the files in question */
+/**
+ * helper routines for invoking JHove in order to get in-depth analysis of the files in question
+ */
 
 public class JHoveHelpers {
     /**
      * Create a function which accepts a Path, run jhove (internally through the main method, not by executing an
      * external process) on the Path, and return the output generated.
      */
-    public static Function<Path, InputStream> getInternalJHoveInvoker(InputStream config, File tmpDir) {
+    public static Function<Path, InputStream> getJHoveFunction(InputStream config, File tmpDir) {
 
-        File tmpDir1 = checkNotNull(tmpDir);
-        // http://www.garymcgath.com/jhovenote.html
+        File configFile = readConfigFile(config, checkNotNull(tmpDir));
 
+        //JHove Initilisation
+        final App jhoveApp = new App("name", "release", new int[]{2015, 9, 15}, "usage", "rights");
+        final JhoveBase je = getJhoveBase(tmpDir, configFile);
+        final OutputHandler jhoveOutputHandler = Objects.requireNonNull(je.getHandler("xml"), "getHandler");
+        final Module jhoveModule = null;
+        final OutputHandler jhoveAboutHandler = null;
+
+
+        Function<Path, InputStream> jhoveFunction = dataFilePath -> {
+            final String jhoveResultFile;
+            try {
+                jhoveResultFile = File.createTempFile("jhove", ".xml", tmpDir).getAbsolutePath();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create temporary jhove result file in " + tmpDir, e);
+            }
+            try {
+                je.dispatch(jhoveApp, jhoveModule, jhoveAboutHandler, jhoveOutputHandler, jhoveResultFile, new String[]{dataFilePath.toString()});
+                return new SelfDeletingFileInputStream(jhoveResultFile);
+            } catch (Exception e) {
+                throw new RuntimeException(dataFilePath + " -> for " + jhoveResultFile, e);
+            }
+        };
+        return jhoveFunction;
+    }
+
+    private static File readConfigFile(InputStream config, File tmpDir1) {
         // First copy the configuration stream to a physical file so JHove can read it.
         File configFile = null;
         try {
             configFile = File.createTempFile("jhove", ".conf", tmpDir1);
             Files.copy(checkNotNull(config), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception e) {
-            throw new RuntimeException("could not put configuration in file " + configFile.getAbsolutePath(), e);
+        } catch (IOException e) {
+            throw new RuntimeException("could not put configuration in file " + configFile, e);
         }
+        return configFile;
+    }
 
-        App app = new App("name", "release", new int[]{2015, 9, 15}, "usage", "rights");
-        final Module module = null;
+    private static JhoveBase getJhoveBase(File tmpDir, File configFile) {
         JhoveBase je;
         try {
             je = new JhoveBase();
         } catch (JhoveException e) {
             throw new RuntimeException("new JhoveBase()", e);
         }
-        je.setLogLevel("SEVERE");
+        //je.setLogLevel("SEVERE");
+        je.setLogLevel("OFF"); // get rid of annoying "Testing SEVERE" log message.
         try {
             je.init(configFile.getAbsolutePath(), null);
         } catch (JhoveException e) {
             throw new RuntimeException("JHove initialization with " + configFile.getAbsolutePath(), e);
         }
-        OutputHandler handler = Objects.requireNonNull(je.getHandler("xml"), "getHandler");
         je.setEncoding("utf-8");
-        je.setTempDirectory(tmpDir1.getAbsolutePath());
+        je.setTempDirectory(tmpDir.getAbsolutePath());
         je.setBufferSize(4096);
         je.setChecksumFlag(false);
         je.setShowRawFlag(false);
+        return je;
+    }
 
-        // JHove either uses a file given by name or System.out iff null.  Use a file, return it as an input stream
-        // and delete it when closed after reading.
+    /**
+     * This file input stream will delete its underlying file on closed.
+     */
+    public static class SelfDeletingFileInputStream extends FileInputStream {
+        private final String outputFileName;
 
-        return path -> {
-            String outputPath = null;
-            try {
-                outputPath = File.createTempFile("jhove", ".xml", tmpDir1).getAbsolutePath();
-                je.dispatch(app, module, null, handler, outputPath, new String[]{path.toString()});
+        public SelfDeletingFileInputStream(String outputFileName) throws FileNotFoundException {
+            super(outputFileName);
+            this.outputFileName = outputFileName;
+        }
 
-                final String finalOutputPath = outputPath;
-                return new FileInputStream(finalOutputPath) {
-                    @Override
-                    public void close() throws IOException {
-                        super.close();
-                        new File(finalOutputPath).delete();
-                    }
-                };
-            } catch (Exception e) {
-                throw new RuntimeException("-> for " + outputPath, e);
-            }
-        };
+        /**
+         * call super.close and delete the file. If super.close throws IOException, the file is not deleted.
+         *
+         * @throws IOException
+         */
+        @Override
+        public void close() throws IOException {
+            super.close();
+            new File(outputFileName).delete();  // for our purposes this is good enough.
+        }
     }
 }

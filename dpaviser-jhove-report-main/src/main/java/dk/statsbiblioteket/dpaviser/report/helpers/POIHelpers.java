@@ -19,6 +19,8 @@ public class POIHelpers {
      */
 
     public static Workbook workbookFor(List<List<String>> cells) {
+        int maxCellNumber = -1;
+
         HSSFWorkbook workbook = new HSSFWorkbook();
         Sheet sheet = workbook.createSheet();
         for (List<String> rowList : cells) {
@@ -26,11 +28,19 @@ public class POIHelpers {
             int cellNumber = 0;
             for (String cellValue : rowList) {
                 Cell cell = row.createCell(cellNumber++);
+                if (cellNumber > maxCellNumber) {
+                    maxCellNumber = cellNumber;
+                }
                 try {
                     cell.setCellValue(Double.parseDouble(cellValue));
                 } catch (NumberFormatException nfe) {
                     cell.setCellValue(cellValue);
                 }
+            }
+        }
+        if (sheet.getPhysicalNumberOfRows() > 0) {
+            for (int col = 0; col < maxCellNumber; col++) {
+                sheet.autoSizeColumn(col);
             }
         }
         return workbook;
