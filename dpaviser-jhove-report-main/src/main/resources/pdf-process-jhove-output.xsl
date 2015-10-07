@@ -57,6 +57,11 @@ http://www.loc.gov/mix/v20 http://www.loc.gov/standards/mix/mix20/mix20.xsd"
                 <td>
                     <xsl:value-of select="$ALLFONTS - $TYPE0 - $TYPE1 - $TRUETYPE"/>
                 </td>
+                <xsl:variable name="UNEMBEDDEDFONTS" select="/j:jhove/j:repInfo/j:properties/j:property/j:values/j:property[j:name/text()='Fonts']/j:values/j:property/j:values/j:property[j:name/text()='Font'][not(j:values/j:property[j:name/text()='FontDescriptor']/j:values/j:property/j:name[starts-with(text(),'FontFile')])]
+"/>
+                <td>
+                    <xsl:value-of select="$UNEMBEDDEDFONTS" />
+                </td>
             </xsl:for-each>
 
             <xsl:for-each select="j:properties/j:property/j:values/j:property[j:name='Pages']">

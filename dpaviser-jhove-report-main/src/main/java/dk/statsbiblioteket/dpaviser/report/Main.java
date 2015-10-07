@@ -63,7 +63,8 @@ import static javax.xml.xpath.XPathConstants.STRING;
 public class Main {
 
     public static final List<String> HEADERS = asList("Name", "Type", "PDF:JPEG", "PDF:UNCOMPRESSED", "PDF:FLATEDECODE",
-            "PDF:OTHERIMAGES", "PDF:TYPE0", "PDF:TYPE1", "PDF:TRUETYPE", "PDF:OTHERFONTS");
+            "PDF:OTHERIMAGES", "PDF:TYPE0", "PDF:TYPE1", "PDF:TRUETYPE", "PDF:OTHERFONTS", "PDF:UNEMBEDDEDFONTS",
+            "PDF:Pages");
 
     protected static DocumentBuilderFactory documentBuilderFactory;
 
@@ -208,7 +209,6 @@ public class Main {
 
         Message message = new MimeMessage(session);
         // use "mail.from" system property if default is not usable!
-        //message.setFrom(new InternetAddress("do-not-reply"));
         message.addRecipients(Message.RecipientType.TO, addresses);
         message.setSubject("Infomedia upload reports for " + new File(args[0]).getAbsolutePath());
         {

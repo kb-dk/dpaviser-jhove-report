@@ -9,11 +9,15 @@ the top directory to walk.
 
 Copy
 
-   soren-report-poc.pl
    dpaviser-jhove-report-main/target/app-assembler/*
    run-after-upload.sh
 
 to target location (currently dpaviser@achernar/dpaviser-rapporter) and ask
 Jens-Henrik to update pseudoprod.  Remember to chmod +x on run-after-upload.sh
 
+Default setting is to derive the sender address automatically (set system property
+"mail.from" to override) and send the mail by contacting an SMTP server running locally
+on the default port 25.
 
+(See https://docs.oracle.com/javaee/6/api/javax/mail/package-summary.html for full list
+of JavaMail properties which can be set in this application as system properties)
