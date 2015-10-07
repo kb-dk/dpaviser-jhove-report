@@ -55,7 +55,9 @@ Number of other fonts
 
     (Everything under /j:jhove/repInfo/properties/property/values/property[name/text()='Fonts'] not matched above)
 
+Number of fonts that are not embedded
 
+    /j:jhove/j:repInfo/j:properties/j:property/j:values/j:property[j:name/text()='Fonts']/j:values/j:property/j:values/j:property[j:name/text()='Font'][not(j:values/j:property[j:name/text()='FontDescriptor']/j:values/j:property/j:name[starts-with(text(),'FontFile')])]
 
 ## Pages
 
