@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,13 +88,12 @@ public class Main {
                 List<List<String>> firstTableFromHTML = JSoupHelpers.getFirstTableFromHTML(tableXML);
 
                 List<String> firstRow = firstTableFromHTML.get(0);
-                firstRow.set(0, new URI(firstRow.get(0)).getPath()); // URLDecode. Hard in XSLT 1.0.
+                String firstCell = firstRow.get(0);
+                firstRow.set(0, URLDecoder.decode(firstCell)); // URLDecode. Hard in XSLT 1.0.
 
                 result.addAll(firstTableFromHTML);
             } catch (TransformerException e) {
                 throw new RuntimeException("could not transform jhove output", e);
-            } catch (URISyntaxException e) {
-                throw new RuntimeException("bad URI returned from XSLT", e);
             }
         } else if (pathString.endsWith(".xml")) { // XML:  Validate.
             try {
@@ -240,7 +240,7 @@ public class Main {
     private static void extractMetadataForPagesInSectionReport(Path path, Map<String, Long> pdfsForSection, Map<String, String> sectionFor) {
         String pathString = path.toString();
 
-        Pattern infomediaPDF = Pattern.compile(".*/([A-Z]{3}[^/]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
+        Pattern infomediaPDF = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
         Matcher matcher = infomediaPDF.matcher(pathString);
         if (matcher.matches()) {
             // $seen{"$1?$2"}++;
