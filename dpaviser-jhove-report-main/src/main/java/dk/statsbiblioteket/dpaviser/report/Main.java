@@ -11,6 +11,7 @@ import dk.statsbiblioteket.dpaviser.report.sax.ExceptionThrowingErrorHandler;
 import dk.statsbiblioteket.util.xml.DOM;
 import dk.statsbiblioteket.util.xml.XSLT;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -28,6 +29,7 @@ import javax.mail.util.ByteArrayDataSource;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -47,6 +49,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -121,12 +124,41 @@ public class Main {
                 db.setErrorHandler(new ExceptionThrowingErrorHandler());
                 Document document = db.parse(path.toUri().toString());
 
-                result.put("XML", asList(pathString, "XML", "XML valid"));
-
-
-                // TODO:  Add more XML information from KFC.
-            } catch (Exception e) {
+                List<String> row = new ArrayList<>(asList(pathString, "XML", "XML valid"));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='KKOD']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PUBX']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='OFIL']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PUGE']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='STATUS']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PMOD']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='FOED']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PMOD']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PIND']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PSID']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PSEK']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PSIN']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PSNA']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='CCRE']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='UDGA']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='PDF']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='CMOD']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='READERSHIP']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='CIRCULATION']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='MEDIATYPE']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='COUNTRY']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='REGION']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='LIX']/@Value)", document, STRING));
+                row.add((String) noNamespacesXPath.evaluate("string(//Metadata[MetadataType/@FormalName='InfomediaMetadata']/Property[@FormalName='LANGUAGE']/@Value)", document, STRING));
+                result.put("XML", row);
+            } catch (SAXException e) {
                 result.put("XML", asList(pathString, "XML", "XML not valid", e.getMessage()));
+            } catch (ParserConfigurationException e) {
+                e.printStackTrace();
+            } catch (XPathExpressionException e) {
+                result.put("XML", asList(pathString, "XML", "XPath expression not valid", e.getMessage()));
+                System.err.println(e.toString());
+           } catch (IOException e) {
+                e.printStackTrace();
             }
         } else if (pathString.endsWith(".md5")) {
             // compare value in this file with value calculated.

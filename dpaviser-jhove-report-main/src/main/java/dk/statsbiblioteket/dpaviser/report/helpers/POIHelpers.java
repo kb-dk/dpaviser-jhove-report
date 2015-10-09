@@ -35,6 +35,8 @@ public class POIHelpers {
                     cell.setCellValue(Double.parseDouble(cellValue));
                 } catch (NumberFormatException nfe) {
                     cell.setCellValue(cellValue);
+                } catch (NullPointerException npe) {
+                    cell.setCellValue("null");
                 }
             }
         }
