@@ -32,6 +32,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayOutputStream;
@@ -67,7 +68,12 @@ public class Main {
             "PDF:OTHERIMAGES", "PDF:TYPE0", "PDF:TYPE1", "PDF:TRUETYPE", "PDF:OTHERFONTS", "PDF:UNEMBEDDEDFONTS",
             "PDF:Pages");
 
+    final static XPath noNamespacesXPath = XPathFactory.newInstance().newXPath();
     protected static DocumentBuilderFactory documentBuilderFactory;
+    static Pattern infomediaPDFPattern = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
+    static XPathExpression sectionNameExpression;
+    static XPathExpression pdfFileNameExpression;
+    private static Pattern embeddedPDFPattern = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/\\\\]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
 
     /**
      * Only return a single row - the multirow unpacking was too tricky for now
@@ -114,7 +120,9 @@ public class Main {
                 DocumentBuilder db = documentBuilderFactory.newDocumentBuilder();
                 db.setErrorHandler(new ExceptionThrowingErrorHandler());
                 Document document = db.parse(path.toUri().toString());
+
                 result.put("XML", asList(pathString, "XML", "XML valid"));
+
 
                 // TODO:  Add more XML information from KFC.
             } catch (Exception e) {
@@ -195,12 +203,10 @@ public class Main {
         Transport.send(message);
     }
 
-
     private static void extractMetadataForPagesInSectionReport(Path path, Map<String, Long> pdfsForSection, Map<String, String> sectionFor) {
         String pathString = path.toString();
 
-        Pattern infomediaPDF = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
-        Matcher matcher = infomediaPDF.matcher(pathString);
+        Matcher matcher = infomediaPDFPattern.matcher(pathString);
         if (matcher.matches()) {
             // $seen{"$1?$2"}++;
             String key = matcher.group(1) + "?" + matcher.group(2);
@@ -214,10 +220,12 @@ public class Main {
                 throw new RuntimeException(pathString + " not found");
             }
 
-            XPath xpath = XPathFactory.newInstance().newXPath();
-            String section = null;
+            String sectionXPath = null;
             try {
-                section = (String) xpath.compile("string(//Property[@FormalName=\"PSNA\"]/@Value)").evaluate(document, STRING);
+                if (sectionNameExpression == null) {
+                    sectionNameExpression = noNamespacesXPath.compile("string(//Property[@FormalName=\"PSNA\"]/@Value)");
+                }
+                sectionXPath = (String) sectionNameExpression.evaluate(document, STRING);
             } catch (XPathExpressionException e) {
                 throw new RuntimeException("section", e);
             }
@@ -225,17 +233,19 @@ public class Main {
             // <media-reference exists="1">JYP\2015\08\07\JYP20150807V15#0007.pdf</media-reference>
             String pdfFileName = null;
             try {
-                pdfFileName = (String) xpath.compile("//media[@media-type=\"PDF\"]/media-reference[@exists=1][1]/text()").evaluate(document, STRING);
+                if (pdfFileNameExpression == null) {
+                    pdfFileNameExpression = noNamespacesXPath.compile("//media[@media-type=\"PDF\"]/media-reference[@exists=1][1]/text()");
+                }
+                pdfFileName = (String) pdfFileNameExpression.evaluate(document, STRING);
             } catch (XPathExpressionException e) {
                 throw new RuntimeException("pdfFileName", e);
             }
             pdfFileName = pdfFileName.trim();
 
-            Pattern embeddedPDF = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/\\\\]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
-            Matcher matcher1 = embeddedPDF.matcher(pdfFileName);
+            Matcher matcher1 = embeddedPDFPattern.matcher(pdfFileName);
             if (matcher1.matches()) {
                 String key = matcher1.group(1) + "?" + matcher1.group(2);
-                sectionFor.put(key, section); // many xml files may point to same pdf - last one wins.
+                sectionFor.put(key, sectionXPath); // many xml files may point to same pdf - last one wins.
             } else {
                 // some XML files do not have PDF link
             }
