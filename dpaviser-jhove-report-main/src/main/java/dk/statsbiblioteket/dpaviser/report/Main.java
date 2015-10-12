@@ -73,6 +73,8 @@ public class Main {
 
     final static XPath noNamespacesXPath = XPathFactory.newInstance().newXPath();
     protected static DocumentBuilderFactory documentBuilderFactory;
+
+    // optimize patterns and xpath compilations.
     static Pattern infomediaPDFPattern = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
     static XPathExpression sectionNameExpression;
     static XPathExpression pdfFileNameExpression;
@@ -82,7 +84,7 @@ public class Main {
      * Only return a single row - the multirow unpacking was too tricky for now
      */
 
-    protected static Map<String, List<String>> getRowKeyValueForPath(Path path, File tmpDir) {
+    protected static Map<String, List<String>> getZeroOrOneRowMappedByTypeForPath(Path path, File tmpDir) {
 
         Map<String, List<String>> result = new HashMap<>();
 
@@ -103,7 +105,7 @@ public class Main {
 
                 List<String> firstRow = firstTableFromHTML.get(0);
                 String firstCell = firstRow.get(0);
-                firstRow.set(0, URLDecoder.decode(firstCell)); // URLDecode. Hard in XSLT 1.0.
+                firstRow.set(0, URLDecoder.decode(firstCell)); // URLDecode of paths. Hard in XSLT 1.0.
 
                 result.put("PDF", firstRow);
             } catch (TransformerException e) {
@@ -157,7 +159,7 @@ public class Main {
             } catch (XPathExpressionException e) {
                 result.put("XML", asList(pathString, "XML", "XPath expression not valid", e.getMessage()));
                 System.err.println(e.toString());
-           } catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         } else if (pathString.endsWith(".md5")) {
@@ -184,6 +186,10 @@ public class Main {
         return result;
     }
 
+    /* Converts a list of cell rows to a workbook and return the bytes which <code>write(...)</code> wrote.
+
+     */
+
     public static byte[] workbookBytesForCellRows(List<List<String>> numberOfPagesInSectionCellRows) throws IOException {
         byte[] report1bytes;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -192,6 +198,12 @@ public class Main {
         return report1bytes;
     }
 
+    /*
+    Use JavaMail to send the actual mail message to the provided addresses by default through localhost port 25.
+    Defaults are used for everything else,
+    so the usual JavaMail properties apply and can be provided as system properties.  Notably "mail.from" is relevant if
+    the default sender is incorrect.
+     */
     public static void sendMail(String filePathName, InternetAddress[] addresses, List<List<String>> md5cellRows, String today, byte[] report1bytes, byte[] report2bytes, byte[] report3bytes) throws MessagingException {
         Session session = Session.getDefaultInstance(System.getProperties());
 
@@ -309,15 +321,17 @@ public class Main {
 
         File tmpDir = com.google.common.io.Files.createTempDir();
 
-        Map<String, Long> pdfsForSection = new TreeMap();
+        Map<String, Long> pdfsForSection = new TreeMap(); // sort keys automatically
 
-        Map<String, String> sectionFor = new TreeMap();
+        Map<String, String> sectionFor = new TreeMap(); // sort keys automatically
+
+        /* First create the section overview.  For simplicity walk the directory structure twice */
 
         Files.walk(startPath)
                 .filter(Files::isRegularFile)
                 .forEach(path -> extractMetadataForPagesInSectionReport(path, pdfsForSection, sectionFor));
 
-        List<List<String>> numberOfPagesInSectionCellRows =
+        List<List<String>> numberOfPagesInSectionRows =
                 pdfsForSection.entrySet().stream().map(
                         e -> asList(e.getKey(), pdfsForSection.get(e.getKey()) + " sider", sectionFor.get(e.getKey()))
                 ).collect(toList());
@@ -329,19 +343,20 @@ public class Main {
         Map<String, List<List<String>>> metadataCellRowsMap =
                 Files.walk(startPath)
                         .filter(Files::isRegularFile)
-                        .map(path -> Main.getRowKeyValueForPath(path, tmpDir))
-                        .peek(e -> System.out.println(e))
-                        .flatMap(map -> map.entrySet().stream())
-                                // Combine Map.Entries - http://stackoverflow.com/a/31488386/53897
+                        .flatMap(path -> Main.getZeroOrOneRowMappedByTypeForPath(path, tmpDir).entrySet().stream())
+                                // Combine Map.Entries in a single Map - http://stackoverflow.com/a/31488386/53897
                         .collect(Collectors.groupingBy(entry -> entry.getKey(),
                                 Collectors.mapping(entry -> entry.getValue(), Collectors.toList())));
 
 
-        // ["PDF"->[["1","2"],["3","4"]], "XML"-> ..., "MD5"->...]
+        // ["PDF"->[["3","4"],["1","2"]], "XML"-> ..., "MD5"->...]
 
         for (List<List<String>> cellRows : metadataCellRowsMap.values()) {
             Collections.sort(cellRows, new CellRowComparator());
         }
+
+        // ["PDF"->[["1","2"],["3","4"]], "XML"-> ..., "MD5"->...]
+
         metadataCellRowsMap.get("PDF").add(0, PDF_HEADERS); // How to mark rows as headers in workbook sheet
 
         // and now create a mail for the desired recipients.
@@ -355,7 +370,7 @@ public class Main {
                 addresses,
                 metadataCellRowsMap.get("MD5"),
                 today,
-                workbookBytesForCellRows(numberOfPagesInSectionCellRows),
+                workbookBytesForCellRows(numberOfPagesInSectionRows),
                 workbookBytesForCellRows(metadataCellRowsMap.get("PDF")),
                 workbookBytesForCellRows(metadataCellRowsMap.get("XML"))
         );

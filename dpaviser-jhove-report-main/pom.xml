@@ -95,6 +95,7 @@
                     <includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
                     <logsDirectory>logs</logsDirectory>
                     <projectArtifactFirstInClassPath>true</projectArtifactFirstInClassPath>
+                    <preAssembleDirectory>for-appassembler</preAssembleDirectory>
                 </configuration>
 
                 <executions>

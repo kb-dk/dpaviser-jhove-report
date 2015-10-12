@@ -4,13 +4,14 @@ Report for Niels Bønding generated from jhove output.
 Run Main with argument 0 being the spreadsheet file to write, and argument 1 being
 the top directory to walk.
 
+NOTE:  Changelog.md is in dpaviser-jhove-report-main/for-appassembler in order to go into
+the deployment tarball.
 
 # Installation:
 
 Copy
 
    dpaviser-jhove-report-main/target/app-assembler/*
-   run-after-upload.sh
 
 to target location (currently dpaviser@achernar/dpaviser-rapporter) and ask
 Jens-Henrik to update pseudoprod.  Remember to chmod +x on run-after-upload.sh

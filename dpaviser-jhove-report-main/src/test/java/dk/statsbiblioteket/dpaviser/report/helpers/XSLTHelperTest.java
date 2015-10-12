@@ -23,14 +23,30 @@ public class XSLTHelperTest {
         assertEquals("<!DOCTYPE html><html>\n" +
                         "<table>\n" +
                         "<tr>\n" +
-                        "<td>./JYP/2015/06/05/JYP20150605L14%230022.pdf</td><td>PDF</td><td>21</td><td>1</td><td>21</td><td>0</td><td>3</td><td>1</td><td>4</td><td>3</td><td>1</td>\n" +
+                        "<td>./JYP/2015/06/05/JYP20150605L14%230022.pdf</td><td>PDF</td><td>1.3</td><td>21</td><td>1</td><td>21</td><td>0</td><td>3</td><td>1</td><td>4</td><td>3</td><td>\n" +
+                        "       Font\n" +
+                        "       \n" +
+                        "       \n" +
+                        "        BaseFont\n" +
+                        "        \n" +
+                        "         DEMPLL+Arial-BoldMT\n" +
+                        "        \n" +
+                        "       \n" +
+                        "       \n" +
+                        "        Encoding\n" +
+                        "        \n" +
+                        "         Identity-H\n" +
+                        "        \n" +
+                        "       \n" +
+                        "       \n" +
+                        "      </td><td>1</td>\n" +
                         "</tr>\n" +
                         "</table>\n" +
                         "</html>\n",
                 result);
 
         List<List<String>> l = JSoupHelpers.getFirstTableFromHTML(result);
-        assertEquals(asList(asList("./JYP/2015/06/05/JYP20150605L14%230022.pdf", "PDF", "21", "1", "21", "0", "3", "1", "4", "3", "1")), l);
+        assertEquals(asList(asList("./JYP/2015/06/05/JYP20150605L14%230022.pdf", "PDF", "1.3","21", "1", "21", "0", "3", "1", "4", "3", "Font BaseFont DEMPLL+Arial-BoldMT Encoding Identity-H", "1")), l);
     }
 
 }
