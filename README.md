@@ -4,7 +4,7 @@ Report for Niels Bønding generated from jhove output.
 Run Main with argument 0 being the spreadsheet file to write, and argument 1 being
 the top directory to walk.
 
-NOTE:  Changelog.md is in dpaviser-jhove-report-main/for-appassembler in order to go into
+NOTE:  Changelog.md is in dpaviser-jhove-report-main/for-deployment in order to go into
 the deployment tarball.
 
 # Installation:

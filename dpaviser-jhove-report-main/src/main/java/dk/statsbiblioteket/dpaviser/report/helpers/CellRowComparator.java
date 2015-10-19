@@ -3,8 +3,6 @@ package dk.statsbiblioteket.dpaviser.report.helpers;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * Comparator of "rows" of "cells" (i.e. list of strings).  Use the first result where left.get(i) is not equal to
  * right.get(i).  If one list is the subset of the other, the shortest list is first.
