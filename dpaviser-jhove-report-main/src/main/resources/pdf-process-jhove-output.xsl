@@ -22,7 +22,25 @@ http://www.loc.gov/mix/v20 http://www.loc.gov/standards/mix/mix20/mix20.xsd"
         <tr>
             <td><xsl:value-of select="@uri"/></td>
             <td>PDF</td>
+
+            <!-- General properties-->
+            <td><xsl:value-of select="./j:size/text()"/></td>
+            <td><xsl:value-of select="./j:format/text()"/></td>
             <td><xsl:value-of select="./j:version/text()"/></td>
+            <td><xsl:value-of select="./j:status/text()"/></td>
+            <td><xsl:for-each select="./j:profiles/j:profile">
+              <xsl:if test="not(position() = 1)">, </xsl:if>
+              <xsl:value-of select="."/>
+            </xsl:for-each></td>
+
+            <!-- Metadata -->
+            <xsl:variable name="INFO" select="j:properties/j:property[j:name/text()='PDFMetadata']/j:values/j:property[j:name/text()='Info']/j:values"/>
+            <td><xsl:value-of select="$INFO/j:property[j:name='Title']/j:values/j:value/text()"/></td>
+            <td><xsl:value-of select="$INFO/j:property[j:name='Producer']/j:values/j:value/text()"/></td>
+            <td><xsl:value-of select="$INFO/j:property[j:name='CreationDate']/j:values/j:value/text()"/></td>
+            <td><xsl:value-of select="$INFO/j:property[j:name='ModDate']/j:values/j:value/text()"/></td>
+
+            <!-- Images -->
             <xsl:variable name="IMAGES" select="j:properties/j:property/j:values/j:property[j:name='Images']"/>
             <xsl:variable name="JPEG" select="count($IMAGES/j:values/j:property[j:name='Image']/j:values/j:property[j:name='NisoImageMetadata']/j:values/j:value/mix:mix/mix:BasicDigitalObjectInformation/mix:Compression/mix:compressionScheme[text()='JPEG'])"/>
             <td>
@@ -40,6 +58,7 @@ http://www.loc.gov/mix/v20 http://www.loc.gov/standards/mix/mix20/mix20.xsd"
                 <xsl:value-of select="count($IMAGES/j:values/j:property[j:name='Image']) - $JPEG - $UNCOMPRESSED - $FLATEDECODE"/>
             </td>
 
+            <!-- Fonts -->
             <xsl:variable name="FONTS" select="j:properties/j:property/j:values/j:property[j:name='Fonts']"/>
             <xsl:variable name="TYPE0" select="count($FONTS/j:values/j:property[j:name='Type0']/j:values/j:property[j:name='Font'])"/>
             <td>
@@ -70,6 +89,7 @@ http://www.loc.gov/mix/v20 http://www.loc.gov/standards/mix/mix20/mix20.xsd"
                 <xsl:value-of select="$UNEMBEDDEDFONTS" />
             </td>
 
+            <!-- Pages -->
             <td>
                 <xsl:value-of select="count(j:properties/j:property/j:values/j:property[j:name='Pages']/j:values/j:property[j:name='Page'])"/>
             </td>

@@ -26,7 +26,9 @@ import static java.util.stream.Collectors.toList;
 public class Main {
 
     public static final List<String> PDF_HEADERS = asList(
-            "Name", "Type", "Version",
+            "Name", "Type",
+            "Size", "Format", "Version", "Status", "Profiles",
+            "Title", "Producer", "CreationDate", "ModDate",
             "PDF:JPEG", "PDF:UNCOMPRESSED", "PDF:FLATEDECODE",
             "PDF:OTHERIMAGES", "PDF:TYPE0", "PDF:TYPE1", "PDF:TRUETYPE", "PDF:OTHERFONTS", "PDF:UNEMBEDDEDFONTS",
             "PDF:Pages");
