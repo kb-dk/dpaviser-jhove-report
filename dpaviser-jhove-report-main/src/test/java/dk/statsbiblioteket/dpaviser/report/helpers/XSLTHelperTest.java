@@ -23,23 +23,7 @@ public class XSLTHelperTest {
         assertEquals("<!DOCTYPE html><html>\n" +
                         "<table>\n" +
                         "<tr>\n" +
-                        "<td>./JYP/2015/06/05/JYP20150605L14%230022.pdf</td><td>PDF</td><td>1.3</td><td>21</td><td>1</td><td>21</td><td>0</td><td>3</td><td>1</td><td>4</td><td>3</td><td>\n" +
-                        "       Font\n" +
-                        "       \n" +
-                        "       \n" +
-                        "        BaseFont\n" +
-                        "        \n" +
-                        "         DEMPLL+Arial-BoldMT\n" +
-                        "        \n" +
-                        "       \n" +
-                        "       \n" +
-                        "        Encoding\n" +
-                        "        \n" +
-                        "         Identity-H\n" +
-                        "        \n" +
-                        "       \n" +
-                        "       \n" +
-                        "      </td><td>1</td>\n" +
+                        "<td>./JYP/2015/06/05/JYP20150605L14%230022.pdf</td><td>PDF</td><td>411749</td><td>PDF</td><td>1.3</td><td>Well-Formed and valid</td><td>Linearized PDF</td><td>untitled</td><td>Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)</td><td>Thu Jun 04 22:13:10 CEST 2015</td><td>Thu Jun 04 22:13:10 CEST 2015</td><td>21</td><td>1</td><td>21</td><td>0</td><td>3</td><td>1</td><td>4</td><td>3</td><td></td><td>1</td>\n" +
                         "</tr>\n" +
                         "</table>\n" +
                         "</html>\n",
