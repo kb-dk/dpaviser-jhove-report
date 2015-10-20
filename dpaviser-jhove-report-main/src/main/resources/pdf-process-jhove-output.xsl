@@ -58,8 +58,15 @@ http://www.loc.gov/mix/v20 http://www.loc.gov/standards/mix/mix20/mix20.xsd"
                 <td>
                     <xsl:value-of select="$ALLFONTS - $TYPE0 - $TYPE1 - $TRUETYPE"/>
                 </td>
-                <xsl:variable name="UNEMBEDDEDFONTS" select="/j:jhove/j:repInfo/j:properties/j:property/j:values/j:property[j:name/text()='Fonts']/j:values/j:property/j:values/j:property[j:name/text()='Font'][not(j:values/j:property[j:name/text()='FontDescriptor']/j:values/j:property/j:name[starts-with(text(),'FontFile')])]
+                <xsl:variable name="UNEMBEDDEDFONTSTEMP" select="/j:jhove/j:repInfo/j:properties/j:property/j:values/j:property[j:name/text()='Fonts']/j:values/j:property/j:values/j:property[j:name/text()='Font'][j:values/j:property[j:name/text()='FontDescriptor'] and not(j:values/j:property[j:name/text()='FontDescriptor']/j:values/j:property/j:name[starts-with(text(),'FontFile')])]/j:values/j:property[j:name/text()='FontDescriptor']/j:values/j:property[j:name/text()='FontName']/j:values/j:value
 "/>
+                <xsl:variable name="UNEMBEDDEDFONTS">
+                    <xsl:for-each select="$UNEMBEDDEDFONTSTEMP">
+                      <xsl:if test="not(position() = 1)">, </xsl:if>
+                      <xsl:value-of select="."/>
+                    </xsl:for-each>
+                </xsl:variable>
+
                 <td>
                     <xsl:value-of select="$UNEMBEDDEDFONTS" />
                 </td>
