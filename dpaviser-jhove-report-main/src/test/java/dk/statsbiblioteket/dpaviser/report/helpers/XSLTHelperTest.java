@@ -30,7 +30,7 @@ public class XSLTHelperTest {
                 result);
 
         List<List<String>> l = JSoupHelpers.getFirstTableFromHTML(result);
-        assertEquals(asList(asList("./JYP/2015/06/05/JYP20150605L14%230022.pdf", "PDF", "1.3","21", "1", "21", "0", "3", "1", "4", "3", "Font BaseFont DEMPLL+Arial-BoldMT Encoding Identity-H", "1")), l);
+        assertEquals(asList(asList("./JYP/2015/06/05/JYP20150605L14%230022.pdf", "PDF", "411749", "PDF", "1.3", "Well-Formed and valid", "Linearized PDF", "untitled", "Acrobat Distiller Server 8.1.0 (Pentium Linux, Built: 2007-09-07)", "Thu Jun 04 22:13:10 CEST 2015", "Thu Jun 04 22:13:10 CEST 2015", "21", "1", "21", "0", "3", "1", "4", "3", "", "1")), l);
     }
 
 }
