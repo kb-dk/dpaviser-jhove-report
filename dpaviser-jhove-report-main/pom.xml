@@ -83,7 +83,7 @@
                 <configuration>
                     <!-- http://www.mojohaus.org/appassembler/appassembler-maven-plugin/assemble-mojo.html -->
                     <platforms>
-                        <platform>unix</platform>
+                        <platform>all</platform>
                     </platforms>
                     <configurationDirectory>conf</configurationDirectory>
                     <copyConfigurationDirectory>true</copyConfigurationDirectory>

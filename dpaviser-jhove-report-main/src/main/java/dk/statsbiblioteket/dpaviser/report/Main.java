@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -123,7 +124,7 @@ public class Main {
 
         MailHelper.sendMail(new File(args[0]).getAbsolutePath(),
                 addresses,
-                metadataCellRowsMap.get("MD5"),
+                metadataCellRowsMap.getOrDefault("MD5", new ArrayList<>()),
                 today,
                 workbookBytesForCellRows(numberOfPagesInSectionRows),
                 workbookBytesForCellRows(metadataCellRowsMap.get("PDF")),
