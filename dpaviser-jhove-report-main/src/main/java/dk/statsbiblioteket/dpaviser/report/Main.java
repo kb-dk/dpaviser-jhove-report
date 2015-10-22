@@ -88,7 +88,7 @@ public class Main {
 
         List<List<String>> numberOfPagesInSectionRows =
                 pdfsForSection.entrySet().stream().map(
-                        e -> asList(e.getKey(), pdfsForSection.get(e.getKey()) + " sider", sectionFor.get(e.getKey()))
+                        e -> asList(e.getKey(), pdfsForSection.get(e.getKey()) + " sider", sectionFor.getOrDefault(e.getKey(), "(ingen XML med titel)"))
                 ).collect(toList());
 
 
