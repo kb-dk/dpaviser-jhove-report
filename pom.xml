@@ -35,8 +35,10 @@
 
     <modules>
         <module>dpaviser-jhove-report-main</module>
+        <!--
         <module>sbforge-parent</module>
         <module>newspaper-parent</module>
+        -->
     </modules>
 </project>
 
