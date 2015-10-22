@@ -1,4 +1,7 @@
 Changelog:
+===
+
+1.0
 ---
 
-2015-09-12:  Initial release.  Analyzes an Infomedia dump and mail reports as attachements.
+Initial release.  Analyzes an Infomedia dump and mail reports as attachements.
