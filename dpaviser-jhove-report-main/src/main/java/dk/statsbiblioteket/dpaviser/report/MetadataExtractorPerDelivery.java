@@ -18,12 +18,12 @@ import java.util.regex.Pattern;
 import static javax.xml.xpath.XPathConstants.STRING;
 
 public class MetadataExtractorPerDelivery {
-    final static XPath noNamespacesXPath = XPathFactory.newInstance().newXPath();
+    static XPath noNamespacesXPath = XPathFactory.newInstance().newXPath();
     // optimize patterns and xpath compilations.
     static Pattern infomediaPDFPattern = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
     static XPathExpression sectionNameExpression;
     static XPathExpression pdfFileNameExpression;
-    private static final Pattern embeddedPDFPattern = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/\\\\]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
+    private static Pattern embeddedPDFPattern = Pattern.compile(".*[/\\\\]([A-Z]{3}[^/\\\\]+)[A-Z](\\d.)#\\d\\d\\d\\d\\.pdf$");
 
     /** Extract metadata from a single page for the section report.  For PDF increment the count for a "page is in this section" key.
      * For XML extract the section header and the name of the PDF file it belongs to and store that for later. */
