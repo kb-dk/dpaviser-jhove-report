@@ -9,6 +9,7 @@ import javax.mail.internet.InternetAddress;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -82,7 +83,7 @@ public class Main {
         /* First create the section overview.  For simplicity walk the directory structure twice */
 
         Files
-                .walk(startPath)
+                .walk(startPath, FileVisitOption.FOLLOW_LINKS)
                 .filter(Files::isRegularFile)
                 .forEach(path -> MetadataExtractorPerDelivery.extractMetadataForPagesInSectionReport(path, pdfsForSection, sectionFor));
 
@@ -96,7 +97,7 @@ public class Main {
          one or more row of cells for each file.  Create a spreadsheet corresponding to the rows.
          */
         Map<String, List<List<String>>> metadataCellRowsMap = Files
-                .walk(startPath)
+                .walk(startPath, FileVisitOption.FOLLOW_LINKS)
                 .filter(Files::isRegularFile)
                 .flatMap(path -> MetadataExtractorPerPage.getZeroOrOneRowMappedByTypeForPath(path, tmpDir).entrySet().stream())
                         // Combine Map.Entries in a single Map - http://stackoverflow.com/a/31488386/53897
@@ -112,8 +113,8 @@ public class Main {
 
         // ["PDF"->[["1","2"],["3","4"]], "XML"-> ..., "MD5"->...]
 
-        metadataCellRowsMap.get("PDF").add(0, PDF_HEADERS); // How to mark rows as headers in workbook sheet
-        metadataCellRowsMap.get("XML").add(0, XML_HEADERS); // How to mark rows as headers in workbook sheet
+        metadataCellRowsMap.getOrDefault("PDF", new ArrayList<>()).add(0, PDF_HEADERS); // How to mark rows as headers in workbook sheet
+        metadataCellRowsMap.getOrDefault("XML", new ArrayList<>()).add(0, XML_HEADERS); // How to mark rows as headers in workbook sheet
 
         // and now create a mail for the desired recipients.
         // Recipe http://www.tutorialspoint.com/java/java_sending_email.htm
