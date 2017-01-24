@@ -8,7 +8,7 @@
 * status
 * profiles/profile
 
-## From //properties/property[name/text()='Info']:
+## From `//properties/property[name/text()='Info']:`
 
 * Title
 * Producer

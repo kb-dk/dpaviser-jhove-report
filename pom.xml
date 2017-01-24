@@ -20,11 +20,11 @@
         <tag>HEAD</tag>
     </scm>
 
-    <!-- jhove snapshots until 1.12 is released officially -->
+    <!-- jhove is not in maven central -->
     <repositories>
         <repository>
             <snapshots>
-                <enabled>true</enabled>
+                <enabled>false</enabled>
             </snapshots>
             <id>opf-dev-mvn</id>
             <name>opf-dev</name>

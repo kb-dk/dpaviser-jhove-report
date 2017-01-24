@@ -41,7 +41,8 @@ public class MetadataExtractorPerPage {
      * Only return a single row - the multirow unpacking was too tricky for now
      */
 
-    protected static Map<String, List<String>> getZeroOrOneRowMappedByTypeForPath(Path path, File tmpDir) {
+    @SuppressWarnings("deprecation")
+	protected static Map<String, List<String>> getZeroOrOneRowMappedByTypeForPath(Path path, File tmpDir) {
 
         Map<String, List<String>> result = new HashMap<>();
 

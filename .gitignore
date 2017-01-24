@@ -10,4 +10,9 @@ buildNumber.properties
 *.iml
 
 nbactions.xml
+.settings
+.project
+.checkstyle
+.classpath
+
 
