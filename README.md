@@ -1,3 +1,11 @@
+Tombstoning note:
+
+This repository have been archived and exists for historical purposes. 
+No updates or futher development will go into this repository. The content can be used as is but no support will be given. 
+
+---
+
+
 # dpaviser-jhove-dk.statsbiblioteket.dpaviser.report
 Report for Niels Bønding generated from jhove output.
 
